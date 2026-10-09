@@ -41,11 +41,11 @@ describe('Phase 10B — evidence rather than untested guesses', () => {
 
   it('separates a knight double attack in the played line from a line without one', () => {
     const fen = '2q4k/1r6/8/5N2/8/8/8/7K b - - 0 1';
-    const played = investigation(fen, ['c8c6','f5d6'], ['h8g8','f5d6']);
+    const played = investigation(fen, ['c8c7','f5d6'], ['h8g8','f5d6']);
     const item = extractTacticalEvidence(played, 'b').find(x => x.kind === 'fork');
     expect(item?.detail).toContain('queen on c8');
     expect(item?.detail).toContain('rook on b7');
-    const without = investigation(fen, ['c8c6','f5d6'], ['h8g8','f5e3']);
+    const without = investigation(fen, ['c8c7','f5d6'], ['h8g8','f5e3']);
     expect(extractTacticalEvidence(without, 'b').some(x => x.kind === 'fork')).toBe(false);
   });
 
