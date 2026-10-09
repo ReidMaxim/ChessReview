@@ -43,6 +43,22 @@ for (const [label, url] of [
     } else {
       console.log(label + ' PASSED: ChessReview mounted.');
     }
+
+    if (label === 'LOCAL BUILT PREVIEW') {
+      // Check the new empty-home experience and first-move import regression.
+      if (!rootText.includes('Ready for a new game') || rootText.includes('Opera Game')) {
+        throw new Error('Initial page must be blank with no sample game.');
+      }
+      await page.locator('.top-import').click();
+      await page.locator('#pgn-input').fill('[Event "Smoke Game"]\n\n1. e4 e5 2. Nf3 Nc6 *');
+      await page.getByRole('button', { name: 'Load PGN' }).click();
+      const selected = (await page.locator('.move-chip.active').textContent())?.trim();
+      if (selected !== 'e4') throw new Error('Expected imported game to start on 1. e4; got ' + selected);
+      await page.getByRole('button', { name: 'Next move' }).click();
+      const next = (await page.locator('.move-chip.active').textContent())?.trim();
+      if (next !== 'e5') throw new Error('Expected navigation to 1... e5; got ' + next);
+      console.log('REGRESSION PASSED: no sample at startup; PGN import begins at first move; next move works.');
+    }
   } catch (e) {
     console.error(label + ' ERROR:', String(e));
     failed = true;
