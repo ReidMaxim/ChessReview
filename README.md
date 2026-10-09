@@ -2,7 +2,7 @@
 
 **A free, open-source home for postgame chess review.** Designed to grow into a local Stockfish-powered chess coach—not a clone of Chess.com's interface.
 
-## Current milestone: 08 · Polish and reliability
+## Current milestone: 10A · Deeper comparative chess investigation
 
 The first working build provides:
 

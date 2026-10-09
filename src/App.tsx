@@ -208,6 +208,7 @@ export default function App() {
         setLinePreview(current => current ? { ...current, step: next } : null);
         return;
       }
+      cancelInvestigation();
       setHintPly(null);
       if (event.key === 'ArrowLeft') setPly(p => Math.max(0, p - 1));
       if (event.key === 'ArrowRight') setPly(p => Math.min(totalMoves, p + 1));
@@ -268,6 +269,7 @@ export default function App() {
 
   function showAlternative(target: number) {
     if (!game || !reviewReport) return;
+    if (investigationRef.current) cancelInvestigation();
     setLinePreview(null);
     const candidate = validatedBestMove(game.positions[target - 1], reviewReport.bestMoves[target - 1] ?? null);
     if (!candidate) return;
@@ -277,6 +279,7 @@ export default function App() {
 
   function replayLine(target: number, kind: LinePreview['kind']) {
     if (!game || !reviewReport) return;
+    if (investigationRef.current) cancelInvestigation();
     const lines = linesFor(target);
     if (!lines?.[kind].steps.length) return;
     setHintPly(null);
@@ -435,7 +438,7 @@ export default function App() {
             <h1>Every move tells <em>a story.</em></h1>
             <p className="intro-copy">{mode === 'review' ? 'Import a finished game to explore every decision, with optional local Stockfish analysis.' : 'Experiment with legal moves, explore positions, and export your practice lines.'}</p>
           </div>
-          <div className="phase-label"><span className="phase-indicator">06.5</span><span>COACH INTELLIGENCE<br /><b>REPLAY REAL ENGINE LINES</b></span></div>
+          <div className="phase-label"><span className="phase-indicator">10A</span><span>DEEP INVESTIGATION<br /><b>COMPARE REAL ENGINE LINES</b></span></div>
         </div>
 
         <div className="workspace-modes" role="group" aria-label="ChessReview workspace mode">

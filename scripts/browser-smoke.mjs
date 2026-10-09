@@ -138,6 +138,19 @@ for (const [label, url] of [
         throw new Error('Coach engine lines did not switch to deep investigation evidence.');
       }
       console.log('DEEP INVESTIGATION PASSED: legal matched-root best and played lines displayed.');
+      // Cancellation must be visible immediately and must not let a
+      // previous search overwrite another selected move.
+      await page.getByRole('button', {name:'Next move'}).click();
+      await page.getByRole('button', {name:'Investigate this move'}).click();
+      await page.getByRole('button', {name:'Cancel investigation'}).click();
+      if (await page.locator('.investigation-compare').count()) {
+        throw new Error('An unrelated completed investigation leaked into the new move.');
+      }
+      await page.getByRole('button', {name:'Previous move'}).click();
+      if (!await page.locator('.investigation-compare').count()) {
+        throw new Error('Previously completed move investigation was not restored.');
+      }
+      console.log('INVESTIGATION CANCEL PASSED: cancelled search stays isolated and completed results are reusable.');
       const consequence = page.getByRole('button', { name: 'Replay what stockfish expects next on board' });
       if (!await consequence.isEnabled()) throw new Error('Engine PV replay must be available after full review.');
       await consequence.click();

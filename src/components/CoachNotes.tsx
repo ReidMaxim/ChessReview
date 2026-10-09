@@ -76,7 +76,7 @@ export default function CoachNotes({
     <section className="coach-panel" aria-label="Coach Notes">
       <div className="coach-panel-head">
         <div className="coach-icon"><BookOpenCheck size={20}/></div>
-        <div><div className="micro-heading">PHASE 06.5 · CHESS INTELLIGENCE</div><h3>Coach Notes</h3></div>
+        <div><div className="micro-heading">PHASE 10A · CHESS INTELLIGENCE</div><h3>Coach Notes</h3></div>
         <span className="coach-proof-label">ENGINE + BOARD FACTS</span>
       </div>
       <div className="coach-summary">
