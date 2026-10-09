@@ -2,7 +2,7 @@
 
 **A free, open-source home for postgame chess review.** Designed to grow into a local Stockfish-powered chess coach—not a clone of Chess.com's interface.
 
-## Current milestone: 06.5 · Chess Intelligence Upgrade
+## Current milestone: 07 · Command Deck UI
 
 The first working build provides:
 
@@ -19,6 +19,7 @@ The first working build provides:
 - Separate Free Board with legal drag/click moves, promotions, undo/redo, reset, FEN load, and PGN/FEN export
 - Coach Notes: readable game recaps, per-move analysis, verified board facts, legal best-move alternatives and a before-position arrow
 - Enhanced coaching: saved Stockfish principal variations, legally replayable response and alternative lines, checkmate/capture/check and knight-fork evidence, a natural-language Coach view and optional Technical view
+- Command Deck: four focused tool views (Moves, Review, Coach, Engine), a pinned chessboard on desktop, independent analysis-panel scrolling, and persistent navigation controls
 
 **Not yet included:** interactive retry-the-move training puzzles, Chess.com username lookup, AI-generated tactical explanations, saved reviews or proprietary Chess.com accuracy metrics. We intentionally avoid claiming tactical reasons that are not proven by engine lines.
 
@@ -59,7 +60,23 @@ GitHub Pages does not provide the cross-origin isolation needed for multithreade
 | 05 (on hold) | Interactive blunder replay / coaching puzzles; postponed until the design is polished |
 | 06 ✅ | Grounded, rule-based Coach Notes, position-specific explanations, legal engine alternatives and game summary. Voice deferred. |
 | 06.5 ✅ | Retain legal engine continuations, evidence-first commentary, selected verified tactical patterns and reversible line replay; optional LLM layer remains experimental |
-| 07 (on hold) | Chess.com username import; saved games and voice remain future options |
+| 07 ✅ | Redesigned split-screen Command Deck, persistent board and controls, focused tools and Coach-first game-review flow |
+| Future (on hold) | Chess.com username import; saved games and voice remain future options |
+
+## Command Deck workspace (Phase 07)
+
+We replaced the growing stack of right-side control panels with a single focused deck:
+
+- **Moves:** PGN move history and navigation; opening a game starts here.
+- **Review:** evaluation timeline, annotations, critical moves and adjustable full-game analysis.
+- **Coach:** human-readable evidence, better-move alternatives and real engine lines. Automatically selected when a full-game review finishes.
+- **Engine:** on-demand Stockfish analysis of one specific position, search depth, score and principal variation.
+
+The move-navigation transport is available below every tool, so you can advance through a game while reading Coach Notes. On desktop, the board is pinned alongside the independently scrolling deck. When you click a critical move in Review, the deck opens Coach Notes for that moment. An always-available toolbar shows the review status and starts or stops full-game analysis.
+
+We also replaced the old hero heading with a compact study workspace once a PGN is loaded. A small board status HUD shows the selected move, the evaluation when available, and Copy FEN. Engine-line replay is still marked clearly as a variation and never changes imported PGN history.
+
+On narrow screens the layout switches to a stacked, touch-friendly board and a height-limited tool deck. The navigation and all four tools remain available. We intentionally do not pin a full-sized board over the coach content on small phones.
 
 ## Stockfish analysis
 

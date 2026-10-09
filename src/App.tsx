@@ -70,7 +70,7 @@ export default function App() {
 
   useEffect(() => {
     if (tool === 'coach') toolScrollRef.current?.scrollTo({ top: 0 });
-  }, [tool, ply, hintPly, linePreview?.step]);
+  }, [tool, ply, hintPly]);
 
   const totalMoves = game?.moves.length ?? 0;
   const currentMove = game && ply > 0 ? game.moves[ply - 1] : undefined;
