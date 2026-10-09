@@ -601,3 +601,29 @@ h1 em{font-style:normal;color:#c2e4a1}
 .coach-evidence-actions span{font-family:monospace;font-size:10px;color:#9cbba8}
 .coach-evidence-actions button{display:flex;align-items:center;gap:6px;border:1px solid #83ac70;border-radius:7px;background:#395a42;color:#e1f2d3;font-size:11px;font-weight:850;padding:9px}
 .coach-no-tactic{margin:9px 0 0}
+
+
+/* Phase 10C — evidence-ranked narrative takes the lead, technical detail is opt-in. */
+.cockpit-panel .coach-move-card .coach-story{margin:15px 0 17px;padding:18px;
+  border-radius:12px;border:1px solid #699475;
+  background:linear-gradient(135deg,#305446 0%,#213c37 60%,#1a3434 100%);
+  box-shadow:inset 3px 0 #b6e39b,0 7px 27px #0002}
+.coach-story-topline{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.coach-story-topline>span:first-child{color:#bde6a4;font-size:10px;font-weight:900;letter-spacing:1.3px}
+.coach-story-confidence{border:1px solid #8cae82;border-radius:50px;color:#d8ecca;font-size:9px;
+  font-weight:850;letter-spacing:.6px;padding:5px 9px}
+.coach-story-confidence.story-board-confirmed{color:#163024;background:#d0ecac;border-color:#c7ec9b}
+.coach-story-confidence.story-no-clear-tactic{color:#ffdab9;border-color:#b39a6f;background:#423d30}
+.coach-story h4{margin:13px 0 10px;font-size:19px;line-height:1.38;font-weight:800;color:#f2f8e9;letter-spacing:-.25px}
+.coach-story p{color:#d3e8d2;font-size:13px;line-height:1.75;margin:0}
+.coach-story-next{display:flex;flex-direction:column;gap:7px;border-top:1px solid #89aa8266;margin:15px 0 0;padding-top:13px}
+.coach-story-next strong{font-size:9px;letter-spacing:1.2px;color:#b7dba6}
+.coach-story-next span{font-size:12px;color:#e0edcf;line-height:1.7}
+.coach-story-replay{display:flex;align-items:center;gap:8px;border:1px solid #c6eaa8;
+  border-radius:7px;padding:10px 12px;margin-top:13px;font-weight:850;
+  background:#bee99b;color:#18321f;font-size:11px}
+.coach-story-replay:hover{background:#e0f4ca}
+.coach-technical{padding:12px 14px;margin:13px 0;background:#102725;border:1px solid #4d775f;border-radius:9px}
+.coach-technical strong{font-size:10px;letter-spacing:1px;color:#c9e3b7}
+.coach-technical p{font-size:11px;line-height:1.65;color:#abc9b3;margin:9px 0}
+@media(max-width:530px){.cockpit-panel .coach-move-card .coach-story{padding:13px}.coach-story h4{font-size:16px}.coach-story p{font-size:12px}}

@@ -3,7 +3,8 @@ import { ArrowLeft, ArrowRight, BookOpenCheck, Crosshair, Eye, Target, Play, X }
 import type { GameRecord } from '../lib/pgn';
 import type { ReviewReport } from '../lib/game-review';
 import { buildGameSummary, buildMoveInsight } from '../lib/insights';
-import { coachLines, describeConsequence, type CoachLine } from '../lib/coach-intelligence';
+import { coachLines, type CoachLine } from '../lib/coach-intelligence';
+import { composeCoachNarrative } from '../lib/coach-narrative';
 import { formatScore } from '../lib/engine-utils';
 import type { InvestigationResult, InvestigationStage } from '../lib/investigation';
 import { extractTacticalEvidence } from '../lib/tactical-evidence';
@@ -70,9 +71,11 @@ export default function CoachNotes({
   const insight = buildMoveInsight(game, report, focus);
   const beforeView = hintPly === focus && selectedPly === focus - 1;
   const lines = coachLines(game, report, focus, investigation?.stage === 'complete' ? investigation.result : null);
-  const consequence = insight && lines ? describeConsequence(game, focus, lines.consequence.steps) : null;
-  const evidence = investigation?.stage === 'complete' && investigation.result && game.moves[focus - 1]
-    ? extractTacticalEvidence(investigation.result, game.moves[focus - 1].color)
+  const deepResult = investigation?.stage === 'complete' ? investigation.result : null;
+  const narrative = composeCoachNarrative(game, report, focus, deepResult);
+  const evidence = deepResult && game.moves[focus - 1] && narrative?.source === 'investigation'
+    ? narrative.status === 'engine-agrees' ? []
+      : extractTacticalEvidence(deepResult, game.moves[focus - 1].color)
     : null;
   const currentPreview = preview && preview.anchorPly === focus ? preview : null;
   const activeLine = currentPreview && lines ? lines[currentPreview.kind] : null;
@@ -81,7 +84,7 @@ export default function CoachNotes({
     <section className="coach-panel" aria-label="Coach Notes">
       <div className="coach-panel-head">
         <div className="coach-icon"><BookOpenCheck size={20}/></div>
-        <div><div className="micro-heading">PHASE 10B · CHESS INTELLIGENCE</div><h3>Coach Notes</h3></div>
+        <div><div className="micro-heading">PHASE 10C · CHESS INTELLIGENCE</div><h3>Coach Notes</h3></div>
         <span className="coach-proof-label">ENGINE + BOARD FACTS</span>
       </div>
       <div className="coach-summary">
@@ -111,9 +114,41 @@ export default function CoachNotes({
                 <button onClick={() => onNavigate(insight.ply)}>Return</button>
               </div>
             )}
-            <p className="coach-assessment">{technical
-              ? 'At depth ' + report.depth + ', this was classified ' + insight.quality.toLowerCase() + '. The evaluation changed from ' + insight.scoreBefore + ' to ' + insight.scoreAfter + ' from White’s perspective.'
-              : insight.assessment}</p>
+            {narrative && (
+              <div className="coach-story coach-assessment" data-testid="coach-story" aria-live="polite">
+                <div className="coach-story-topline">
+                  <span>COACH'S READ</span>
+                  <span className={'coach-story-confidence story-' + narrative.status}>
+                    {narrative.status === 'board-confirmed' ? 'BOARD-CONFIRMED' :
+                      narrative.status === 'engine-shown' ? 'ENGINE-SHOWN' :
+                      narrative.status === 'engine-agrees' ? 'ENGINE AGREES' :
+                      narrative.status === 'no-clear-tactic' ? 'NO CLEAR TACTIC' : 'FIRST PASS'}
+                  </span>
+                </div>
+                <h4>{narrative.headline}</h4>
+                <p>{narrative.explanation}</p>
+                <div className="coach-story-next">
+                  <strong>WHAT TO LOOK FOR</strong>
+                  <span>{narrative.takeaway}</span>
+                </div>
+                {narrative.evidenceStep !== null && (
+                  <button className="coach-story-replay" onClick={() => onReplayEvidence(focus, narrative.evidenceStep!)}>
+                    <Play size={15}/> Show the key moment
+                  </button>
+                )}
+              </div>
+            )}
+            {technical && (
+              <div className="coach-technical" data-testid="coach-technical">
+                <strong>TECHNICAL VIEW</strong>
+                <p>Quick review depth {report.depth}: {insight.quality.toLowerCase()} · White-perspective evaluation
+                  { ' ' + insight.scoreBefore } → {insight.scoreAfter}. The classification is a shallow estimate, not a proof of tactical cause.</p>
+                {deepResult && narrative?.source === 'investigation' && (
+                  <p>Deeper same-root search reached depth {deepResult.best.depth} for its preferred move and
+                    depth {deepResult.played.depth} for the played move. Score bounds and search limits are in Deeper Investigation below.</p>
+                )}
+              </div>
+            )}
 
             {evidence !== null && (
               <div className="coach-tactical-evidence" data-testid="tactical-evidence">
@@ -133,17 +168,10 @@ export default function CoachNotes({
                     </div>
                   </div>
                 )) : (
-                  <p className="coach-no-tactic">The deeper lines don't demonstrate a single clear tactical cause here. You can still compare both continuations below without guessing why one move is stronger.</p>
+                  <p className="coach-no-tactic">No additional tactical finding is established in these lines. Use the two continuations to explore the position without guessing at a cause.</p>
                 )}
               </div>
             )}
-            {evidence === null && consequence && consequence.kind !== 'insufficient' && (
-              <div className="coach-key-point" data-testid="coach-consequence">
-                <strong>{consequence.headline}</strong>
-                <p>{consequence.description}</p>
-              </div>
-            )}
-
             <div className="coach-scores">
               <div><span>BEFORE</span><strong>{insight.scoreBefore}</strong></div>
               <ArrowRight size={17}/>
@@ -205,7 +233,7 @@ export default function CoachNotes({
       {insight && (
           <div className="investigation-card" data-testid="investigation">
             <div className="investigation-title"><Crosshair size={16}/>
-              <strong>DEEPER INVESTIGATION</strong><span>PHASE 10B</span>
+              <strong>DEEPER INVESTIGATION</strong><span>PHASE 10C</span>
             </div>
             {investigation?.stage === 'complete' && investigation.result ? (
               <>

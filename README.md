@@ -2,7 +2,7 @@
 
 **A free, open-source home for postgame chess review.** Designed to grow into a local Stockfish-powered chess coach—not a clone of Chess.com's interface.
 
-## Current milestone: 10B · Verified tactical consequences
+## Current milestone: 10C · Natural-language coaching
 
 The first working build provides:
 
@@ -64,7 +64,14 @@ GitHub Pages does not provide the cross-origin isolation needed for multithreade
 | 08 ✅ | Mobile responsive study view, bounded Stockfish caching, hidden-tab suspension, accessible dialogs and five-screen QA |
 | 10A ✅ | Same-root deep engine comparisons with cancellation and replay |
 | 10B ✅ | Conservative evidence for mate, material after recaptures, knight double attacks and absolute pins; false-positive tests |
+| 10C ✅ | Fact-first natural-language coach, instructional takeaway, safer uncertainty, deeper-analysis corrections and technical detail toggle |
 | Future (on hold) | Chess.com username import; saved games and voice remain future options |
+
+## Phase 10C — Fact-first human coaching
+
+The visible Coach now leads with a human-readable **Coach's Read** narrative: one concrete headline, a short explanation grounded in legal engine evidence, and **What to look for** so the student knows what to inspect on the board. Confirmed and engine-demonstrated facts take priority over raw centipawn loss. A supporting board-replay button jumps to the exact demonstrated move. Coach remains near the top and Deeper Investigation stays at the very bottom.
+
+When the engine does **not** demonstrate a tactical reason, the coach says so rather than inventing one. If a deeper Stockfish search prefers the played move despite a critical shallow classification, the coach acknowledges that difference instead of repeating the shallow judgment. The Technical toggle reveals depth/score context *in addition to* the coach's prose, not instead of it. The explanation system is deterministic and offline; it does not use a hidden or remote LLM. Future deeper positional/cause validation remains separate.
 
 ## Phase 10B — Tactical evidence and Coach priority
 

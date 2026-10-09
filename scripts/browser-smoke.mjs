@@ -115,6 +115,15 @@ for (const [label, url] of [
       if (!(await page.getByRole('heading', { name: 'Coach Notes' }).count())) {
         throw new Error('Coach Notes not shown after game review.');
       }
+      const initialStory = page.getByTestId('coach-story');
+      if (!await initialStory.count() || !await initialStory.locator('h4').count()) {
+        throw new Error('Coach narration does not lead the review.');
+      }
+      await page.getByRole('button', { name: 'Technical', exact: true }).click();
+      if (!(await page.getByTestId('coach-technical').count())) {
+        throw new Error('Technical toggle should reveal additional factual engine data.');
+      }
+      await page.getByRole('button', { name: 'Coach', exact: true }).click();
       // The instructional prose comes first; the deeper analysis waits at the end.
       const orderedHeadings = await page.locator('.coach-panel').evaluate(panel => ({
         assessment: panel.querySelector('.coach-assessment')?.getBoundingClientRect().top,
@@ -158,6 +167,14 @@ for (const [label, url] of [
         throw new Error('Coach engine lines did not switch to deep investigation evidence.');
       }
       console.log('DEEP INVESTIGATION PASSED: legal matched-root best and played lines displayed.');
+      if (!(await page.getByTestId('coach-story').getAttribute('class')).includes('coach-story')) {
+        throw new Error('Deeper comparison did not preserve Coach voice at the top.');
+      }
+      const storyContent = await page.getByTestId('coach-story').innerText();
+      if (!storyContent.includes('WHAT TO LOOK FOR')) {
+        throw new Error('Evidence-first coach must offer a practical observation.');
+      }
+      console.log('COACH NARRATIVE PASSED: deeper findings use an instructive headline and practical takeaway.');
       if (!(await page.getByTestId('tactical-evidence').count())) {
         throw new Error('Completed investigation did not show evidence-backed coaching or a cautious fallback.');
       }
@@ -271,6 +288,11 @@ for (const [label, url] of [
       }
       await page.getByRole('button', { name: 'Investigate this move' }).click();
       await page.getByText('That move allows checkmate immediately.').waitFor({ timeout: 45000 });
+      const decisive = page.getByTestId('coach-story');
+      if (!(await decisive.innerText()).includes('Qh4#') ||
+          !(await decisive.innerText()).includes('BOARD-CONFIRMED')) {
+        throw new Error('Coach story did not prioritize the verified mating continuation.');
+      }
       const mateFact = page.getByTestId('tactical-evidence');
       if (!await mateFact.getByText('BOARD-CONFIRMED').count()) {
         throw new Error('Immediately legal mate was not marked board-confirmed.');

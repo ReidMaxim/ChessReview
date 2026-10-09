@@ -71,7 +71,7 @@ function materialBalance(fen: string, perspective: Color): number {
     value + (piece ? points[piece.type] * (piece.color === perspective ? 1 : -1) : 0), 0);
 }
 
-function linesAreVerified(result: InvestigationResult): boolean {
+export function isVerifiedInvestigation(result: InvestigationResult): boolean {
   if (result.best.rootFen !== result.rootFen || result.played.rootFen !== result.rootFen ||
       result.played.pv[0] !== result.playedUci) return false;
   for (const line of [result.best, result.played]) {
@@ -87,7 +87,7 @@ function linesAreVerified(result: InvestigationResult): boolean {
  * Reports an observation, never "this mistake forces a win" without proof.
  */
 export function extractTacticalEvidence(result: InvestigationResult, mover: Color): TacticalEvidence[] {
-  if (!linesAreVerified(result)) return [];
+  if (!isVerifiedInvestigation(result)) return [];
   const enemy = opposite(mover);
   const enemyName = playerName(enemy);
   const played = result.played.steps, best = result.best.steps;
