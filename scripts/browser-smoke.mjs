@@ -95,6 +95,7 @@ for (const [label, url] of [
       const target = await page.locator('.sandbox-panel').count();
       if (!target) throw Error('Sandbox panel missing.');
 
+      await page.locator('cg-board').scrollIntoViewIfNeeded();
       const boardBox = await page.locator('cg-board').boundingBox();
       if (!boardBox) throw Error('Free Board drag target missing');
       const point = (file, rank) => ({
@@ -103,28 +104,10 @@ for (const [label, url] of [
       });
       const from = point('e', 2);
       const dest = point('e', 4);
-      console.log('SANDBOX HITTEST BEFORE', JSON.stringify(await page.evaluate(({from,dest}) => ({
-        from: document.elementFromPoint(from.x,from.y)?.outerHTML.slice(0,300),
-        dest: document.elementFromPoint(dest.x,dest.y)?.outerHTML.slice(0,300),
-        box: document.querySelector('cg-board')?.getBoundingClientRect().toJSON(),
-      }), {from,dest})));
-      await page.mouse.click(from.x,from.y);
-      console.log('SANDBOX SELECTED AFTER CLICK', JSON.stringify(await page.evaluate(() => ({
-        selected: document.querySelector('cg-board square.selected')?.outerHTML,
-        destinations: document.querySelectorAll('cg-board square.move-dest').length,
-        dragged: document.querySelector('cg-board piece.dragging')?.outerHTML,
-      }))));
       await page.mouse.move(from.x, from.y);
       await page.mouse.down();
       await page.mouse.move(dest.x, dest.y, { steps: 20 });
       await page.mouse.up();
-      const debugBoard = await page.evaluate(() => ({
-        selected: document.querySelector('cg-board square.selected')?.getAttribute('class'),
-        pieces: document.querySelectorAll('cg-board piece').length,
-        moves: document.querySelectorAll('.sandbox-move-chip').length,
-        turn: document.querySelector('.sandbox-turn strong')?.textContent,
-      }));
-      console.log('SANDBOX DRAG DEBUG', JSON.stringify(debugBoard));
       await page.waitForFunction(() => document.querySelector('.sandbox-move-chip')?.textContent?.includes('e4'), undefined, {timeout: 10000});
       await page.getByRole('button', { name: 'Undo sandbox move' }).click();
       if ((await page.locator('.sandbox-turn strong').innerText()) !== 'White to move') throw Error('Sandbox undo failed.');
