@@ -6,6 +6,9 @@ import {
   Upload, X,
 } from 'lucide-react';
 import Board from './components/Board';
+import EnginePanel from './components/EnginePanel';
+import { StockfishClient, type EngineState } from './lib/engine';
+import type { Analysis } from './lib/engine-utils';
 import { parsePgn, type GameRecord } from './lib/pgn';
 
 function scoreLabel(result: string | undefined): string {
@@ -29,6 +32,12 @@ export default function App() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const movePanelRef = useRef<HTMLDivElement>(null);
+  const [engineOn,setEngineOn] = useState(false);
+  const [depth,setDepth] = useState(12);
+  const [engineStatus,setEngineStatus] = useState<EngineState | 'off'>('off');
+  const [engineError,setEngineError] = useState('');
+  const [analysis,setAnalysis] = useState<Analysis | null>(null);
+  const engineRef = useRef<StockfishClient | null>(null);
 
   const totalMoves = game?.moves.length ?? 0;
   const currentMove = game && ply > 0 ? game.moves[ply - 1] : undefined;
@@ -68,9 +77,43 @@ export default function App() {
     }
   }, [ply, game]);
 
+  // Start one Worker when opted in; reuse it as the reviewer navigates moves.
+  useEffect(() => {
+    if (!engineOn || !game) {
+      engineRef.current?.dispose();
+      engineRef.current = null;
+      setEngineStatus('off');
+      setAnalysis(null);
+      return;
+    }
+    try {
+      const engine = new StockfishClient({
+        onState: (state, message = '') => {
+          setEngineStatus(state);
+          setEngineError(message);
+        },
+        onAnalysis: setAnalysis,
+      });
+      engineRef.current = engine;
+    } catch (caught) {
+      setEngineStatus('error');
+      setEngineError(caught instanceof Error ? caught.message : 'Engine failed to start.');
+    }
+    return () => {
+      engineRef.current?.dispose();
+      engineRef.current = null;
+    };
+  }, [engineOn, Boolean(game)]);
+
+  useEffect(() => {
+    if (engineOn && game) engineRef.current?.analyze(currentFen, depth);
+  }, [engineOn, game, currentFen, depth]);
+
   function loadPgn(value: string) {
     try {
       const next = parsePgn(value);
+      setEngineOn(false);
+      setAnalysis(null);
       setGame(next);
       // Start at White's first move, not the game's final position.
       // Users can press Home to see the initial setup.
@@ -96,6 +139,7 @@ export default function App() {
 
   const lastMove = currentMove ? [currentMove.from, currentMove.to] as [string, string] : undefined;
   const result = game?.headers.Result;
+  const visibleAnalysis = engineOn && analysis?.fen === currentFen ? analysis : null;
 
   return (
     <div className="app-shell">
@@ -122,7 +166,7 @@ export default function App() {
             <h1>Every move tells <em>a story.</em></h1>
             <p className="intro-copy">Import a finished game to explore it move by move. No account, no paywall, just your chess.</p>
           </div>
-          <div className="phase-label"><span className="phase-indicator">01</span><span>FOUNDATION BUILD<br /><b>PGN & BOARD REVIEW</b></span></div>
+          <div className="phase-label"><span className="phase-indicator">02</span><span>ENGINE INTEGRATION<br /><b>POSTGAME ANALYSIS</b></span></div>
         </div>
 
         <div className="workspace">
@@ -136,7 +180,7 @@ export default function App() {
             </div>
 
             <div className="board-mat">
-              <Board fen={currentFen} orientation={orientation} lastMove={lastMove} inCheck={position.inCheck()} />
+              <Board fen={currentFen} orientation={orientation} lastMove={lastMove} inCheck={position.inCheck()} bestMove={visibleAnalysis?.pv[0] ?? null} />
             </div>
 
             <div className="game-footer">
@@ -197,6 +241,10 @@ export default function App() {
               <button className="transport-btn" aria-label="Go to end" title="End (End)" onClick={() => setPly(totalMoves)} disabled={!game || ply === totalMoves}><ChevronsRight size={20} /></button>
             </div>
 
+            <EnginePanel available={Boolean(game)} enabled={engineOn} onToggle={() => setEngineOn(on => !on)}
+              depth={depth} onDepth={setDepth} status={engineStatus} message={engineError}
+              analysis={visibleAnalysis} fen={currentFen}/>
+
             <div className="position-panel">
               <div className="position-panel-head"><span className="micro-heading">POSITION INSPECTOR</span><span className="step-counter">{String(ply).padStart(2, '0')} / {String(totalMoves).padStart(2, '0')}</span></div>
               <div className="position-focus">
@@ -214,7 +262,7 @@ export default function App() {
 
             <div className="upcoming">
               <div className="upcoming-icon"><BookOpen size={19} /></div>
-              <div><strong>Engine analysis is next.</strong><p>Stockfish evaluations, best-move arrows, and guided explanations will be added in the next milestone. No pretend scores here.</p></div>
+              <div><strong>More review tools ahead.</strong><p>Full-game accuracy graphs, blunder detection and the independent Free Board sandbox are planned for upcoming milestones.</p></div>
             </div>
           </section>
         </div>

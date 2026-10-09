@@ -2,7 +2,7 @@
 
 **A free, open-source home for postgame chess review.** Designed to grow into a local Stockfish-powered chess coach—not a clone of Chess.com's interface.
 
-## Current milestone: 01 · Foundation
+## Current milestone: 02 · Browser-based Stockfish analysis
 
 The first working build provides:
 
@@ -14,8 +14,9 @@ The first working build provides:
 - A clean starting-position board when no PGN has been imported (no sample game shown)
 - Imported games open on White's first move; Home returns to the starting position
 - Tests, continuous integration, and GitHub Pages deployment workflow
+- Optional Stockfish 19 Lite WebAssembly analysis, evaluations, best-move arrows, SAN variation and depth controls
 
-**Not yet included:** interactive Free Board/Sandbox mode, Stockfish analysis, engine evaluations, move classifications, best-move arrows, game summaries, coach, Chess.com username search. The default board is currently a read-only position viewer until a sandbox mode is built. The interface intentionally does not show fabricated analysis data.
+**Not yet included:** Free Board/Sandbox mode, whole-game engine review, move classifications, game summaries, coach and Chess.com username lookup. The board stays read-only to avoid mixing casual live games with postgame evaluation.
 
 ## Run locally
 
@@ -40,7 +41,7 @@ npm run build
 3. From the **Actions** tab, run **Deploy GitHub Pages** manually, or push a commit to main.
 4. Public site: https://reidmaxim.github.io/ChessReview/
 
-GitHub Pages cannot supply the response headers needed for some multi-threaded Stockfish WASM builds, so the engine milestone will start with a single-threaded, lightweight browser build.
+GitHub Pages does not provide the cross-origin isolation needed for multithreaded WASM. ChessReview uses **Stockfish 19 Lite Single** instead, from the pinned `stockfish@19.0.0` package. `npm run build` copies unmodified JS and WASM into `public/engine/`; the browser loads these on demand into a Worker. The evaluation is always shown from White's perspective. No paid engine service is needed.
 
 ## Planned milestones
 
@@ -48,11 +49,21 @@ GitHub Pages cannot supply the response headers needed for some multi-threaded S
 | --- | --- |
 | 01 ✅ | Clean initial board, PGN import, first-move navigation, GitHub Pages |
 | 01.5 📋 | Free Board / Analysis Sandbox: manual legal moves, reset/undo, FEN and PGN export; independent from imported-game review |
-| 02 | Browser-side Stockfish engine and best-move arrows |
+| 02 ✅ | Browser-side Stockfish evaluations, best-move arrows and principal variations |
 | 03 | Full-game evaluation graph and transparent move quality |
 | 04 | Critical positions, guided review, retry moves |
 | 05 | Verified chess explanations and optional system voice |
 | 06 | Chess.com public-game username importer and saved history |
+
+## Stockfish analysis
+
+1. Import a PGN for a **finished** game.
+2. Click **Analyze** to load Stockfish locally in your browser.
+3. Navigate to another position or change depth (8–16) to recompute the best continuation. A green arrow shows the engine's recommended next move.
+4. **Pause** disposes of the worker to conserve battery and resources.
+5. Whole-game review and move-quality classifications are reserved for stage 03.
+
+Engine licensing: The official Stockfish.js 19 build (GPL-3.0) is included from the npm package without modification at build time. Source, authors, and terms: https://github.com/nmrugg/stockfish.js and https://github.com/official-stockfish/Stockfish. ChessReview remains GPL-3.0-or-later.
 
 ## Free Board / Analysis Sandbox design (researched, not implemented yet)
 
