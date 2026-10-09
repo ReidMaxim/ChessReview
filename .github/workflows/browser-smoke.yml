@@ -1,0 +1,24 @@
+name: Browser smoke test
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm install --no-save --no-audit --no-fund playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Start local production preview
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/chessreview-preview.log 2>&1 &
+          sleep 3
+      - name: Inspect local build and public site
+        run: node scripts/browser-smoke.mjs
