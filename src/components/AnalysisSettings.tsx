@@ -22,7 +22,7 @@ export default function AnalysisSettings({ preferences, onChange, onClose }: Pro
             <div className="micro-heading"><Settings2 size={13}/> LOCAL ANALYSIS</div>
             <h2 id="analysis-settings-title">Engine settings</h2>
           </div>
-          <button className="plain-icon" onClick={onClose} aria-label="Close settings" autoFocus><X size={20}/></button>
+          <button className="plain-icon" onClick={onClose} aria-label="Close settings"><X size={20}/></button>
         </div>
         <p>Make the chessboard feel alive without burning CPU when you aren't using it.</p>
         <div className="settings-field">

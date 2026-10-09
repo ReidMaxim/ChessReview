@@ -535,7 +535,7 @@ export default function App() {
             <div className="modal-head"><div><div className="micro-heading">ADD TO WORKSPACE</div><h2 id="import-title">Import a game</h2></div><button className="plain-icon" onClick={() => setImportOpen(false)} aria-label="Close"><X size={21} /></button></div>
             <p>Paste a complete PGN from any chess platform. Everything is parsed locally—no login required.</p>
             <label htmlFor="pgn-input">PGN NOTATION</label>
-            <textarea id="pgn-input" autoFocus spellCheck={false} value={draft} onChange={e => { setDraft(e.target.value); setError(''); }} placeholder={'[White "You"]\n[Black "Opponent"]\n\n1. e4 e5 2. Nf3 Nc6 ...'} />
+            <textarea id="pgn-input" data-autofocus spellCheck={false} value={draft} onChange={e => { setDraft(e.target.value); setError(''); }} placeholder={'[White "You"]\n[Black "Opponent"]\n\n1. e4 e5 2. Nf3 Nc6 ...'} />
             {error && <div className="form-error" role="alert">{error}</div>}
             <div className="modal-actions">
               <button className="primary-button" onClick={() => loadPgn(draft)}><Upload size={16} /> Load PGN</button>
