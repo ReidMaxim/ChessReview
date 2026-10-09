@@ -58,7 +58,7 @@ for (const [label, url] of [
       const next = (await page.locator('.move-chip.active').textContent())?.trim();
       if (next !== 'e5') throw new Error('Expected navigation to 1... e5; got ' + next);
       console.log('REGRESSION PASSED: no sample at startup; PGN import begins at first move; next move works.');
-      await page.locator('#engine-depth').fill('8');
+      await page.locator('#engine-depth').press('Home');
       await page.getByRole('button', { name: 'Start Stockfish analysis' }).click();
       await page.waitForFunction(() => {
         const node = document.querySelector('[data-testid="engine-score"]');
