@@ -58,9 +58,15 @@ for (const [label, url] of [
       const next = (await page.locator('.move-chip.active').textContent())?.trim();
       if (next !== 'e5') throw new Error('Expected navigation to 1... e5; got ' + next);
       console.log('REGRESSION PASSED: no sample at startup; PGN import begins at first move; next move works.');
+      // Imported games enable position analysis automatically unless disabled in preferences.
+      if (await page.getByRole('meter', { name: 'Position evaluation' }).count() !== 1) {
+        throw new Error('Evaluation bar did not appear beside imported game board.');
+      }
       await page.getByRole('button', { name: 'Engine tab' }).click();
+      if (!(await page.getByRole('button', { name: 'Pause Stockfish analysis' }).count())) {
+        throw new Error('Stockfish should be enabled automatically for imported games.');
+      }
       await page.locator('#engine-depth').press('Home');
-      await page.getByRole('button', { name: 'Start Stockfish analysis' }).click();
       await page.waitForFunction(() => {
         const node = document.querySelector('[data-testid="engine-score"]');
         return node && node.textContent && node.textContent.trim() !== '—';
@@ -75,6 +81,23 @@ for (const [label, url] of [
         throw new Error('Analysis pause did not return to standby');
       }
       console.log('STOCKFISH PAUSE PASSED: engine stopped and UI reset.');
+      await page.getByRole('button', { name: 'Open analysis settings' }).click();
+      const engineSwitch = page.getByRole('switch', { name: 'Analyze imported games automatically' });
+      if (await engineSwitch.isChecked()) throw new Error('Pausing Stockfish must update the saved master switch.');
+      await engineSwitch.check();
+      await page.locator('#settings-engine-depth').press('Home');
+      if (!await page.getByRole('switch', { name: 'Show evaluation bar' }).isChecked()) {
+        throw new Error('Evaluation bar should be on by default.');
+      }
+      const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('chessreview.analysis.v1') || '{}'));
+      if (saved.enabled !== true || saved.depth !== 8 || saved.showBar !== true) {
+        throw new Error('Engine preferences were not saved: ' + JSON.stringify(saved));
+      }
+      await page.getByRole('button', { name: 'Close settings' }).click();
+      await page.waitForFunction(() => document.querySelector('[data-testid="evaluation-bar"]')?.getAttribute('data-score-source') === 'live', undefined, {timeout: 60000});
+      const whiteShare = Number(await page.getByTestId('evaluation-bar').getAttribute('data-white-share'));
+      if (!(whiteShare > 0 && whiteShare < 100)) throw new Error('Position evaluation bar should have a finite balance: ' + whiteShare);
+      console.log('AUTO ENGINE / SETTINGS PASSED: auto-resume, persistence, depth and evaluation bar.');
       await page.getByRole('button', { name: 'Review tab' }).click();
       await page.locator('#review-depth').press('Home');
       await page.getByRole('button', { name: 'Run full game review' }).click();
@@ -184,6 +207,12 @@ for (const [label, url] of [
         throw new Error('Return from alternative did not restore the played move.');
       }
       console.log('COACH ALTERNATIVE PASSED: viewed pre-move engine hint and restored original move.');
+      await page.getByRole('button', { name: 'Go to end' }).click();
+      const mateBar = Number(await page.getByTestId('evaluation-bar').getAttribute('data-white-share'));
+      if (mateBar !== 0) throw new Error('Black checkmate should fill the bar black: ' + mateBar);
+      await page.getByRole('button', { name: 'Go to beginning' }).click();
+      await page.getByRole('button', { name: 'Next move' }).click();
+      console.log('EVALUATION MATE PASSED: Black mating position fills Black side of bar.');
       await page.getByRole('button', { name: 'Coach tab' }).click();
       // Command Deck usability: the board must remain visible when coach notes scroll.
       await page.locator('.cockpit-content').evaluate(el => { el.scrollTop = el.scrollHeight; });
