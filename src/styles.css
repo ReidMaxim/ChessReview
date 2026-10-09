@@ -448,3 +448,21 @@ h1 em{font-style:normal;color:#c2e4a1}
 @media(prefers-reduced-motion:reduce){
   .cockpit-tab,.cockpit-state-dot,.tab-busy-dot{animation:none;transition:none}
 }
+
+
+/* Command Deck viewport fit: the entire board and right console stay on screen. */
+@media(min-width:900px){
+  .is-studying .workspace-modes{
+    position:absolute;top:10px;left:50%;transform:translateX(-50%);
+    margin:0;z-index:4;padding:3px 5px;background:#18322e;
+    border:1px solid #56785d;box-shadow:0 6px 25px #0005;
+  }
+  .is-studying .workspace-modes .mode-tip{display:none}
+  .is-studying .workspace-modes .mode-choice{padding:8px 13px}
+  .studio-workspace .board-container{max-width:min(100%,calc(100dvh - 302px))}
+  .studio-workspace .cockpit-panel{height:calc(100dvh - 95px);min-height:460px}
+}
+@media(max-width:899px){
+  .is-studying .workspace-modes{position:static;transform:none;margin-bottom:14px}
+  .studio-workspace .board-container{max-width:min(100%,max(230px,calc(100svh - 310px)))}
+}
