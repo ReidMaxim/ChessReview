@@ -107,13 +107,13 @@ for (const [label, url] of [
       if (!await page.getByRole('group', { name: 'Engine replay on main board' }).count()) {
         throw new Error('Main board did not switch to engine line replay.');
       }
-      const gameMoveBefore = await page.locator('.move-chip.active').innerText();
+      const gameMoveBefore = await page.locator('.move-progress span').innerText();
       await page.getByRole('button', { name: 'Next move on main replay' }).click();
       const replaySan = (await page.locator('.board-hud .big-san').innerText()).trim();
       if (!replaySan || replaySan.includes('Initial position')) {
         throw new Error('Engine replay did not advance to a legal move: ' + replaySan);
       }
-      if ((await page.locator('.move-chip.active').innerText()) !== gameMoveBefore) {
+      if ((await page.locator('.move-progress span').innerText()) !== gameMoveBefore) {
         throw new Error('Engine replay mutated the selected PGN move.');
       }
       await page.getByRole('button', { name: 'Exit main replay' }).click();
@@ -179,10 +179,12 @@ for (const [label, url] of [
         throw new Error('Coach Notes lost move context when previewing the alternative.');
       }
       await page.locator('.coach-before-banner button').click();
+      await page.getByRole('button', { name: 'Moves tab' }).click();
       if ((await page.locator('.move-chip.active').innerText()).trim() !== 'f3') {
         throw new Error('Return from alternative did not restore the played move.');
       }
       console.log('COACH ALTERNATIVE PASSED: viewed pre-move engine hint and restored original move.');
+      await page.getByRole('button', { name: 'Coach tab' }).click();
       // Command Deck usability: the board must remain visible when coach notes scroll.
       await page.locator('.cockpit-content').evaluate(el => { el.scrollTop = el.scrollHeight; });
       const layout = await page.evaluate(() => {
