@@ -589,3 +589,15 @@ h1 em{font-style:normal;color:#c2e4a1}
 .cockpit-panel .coach-panel>.investigation-card{order:5;margin:17px 0 0}
 .coach-alt-inline{display:inline-flex;gap:7px;align-items:center;padding:9px 11px;background:#203b30;border:1px solid #56765c;border-radius:7px;color:#cfe5bd;font-size:11px;font-weight:750;margin:10px 0 0}
 .coach-alt-inline:hover{background:#2c513a}
+
+/* Phase 10B: verifiable chess consequences in the lead Coach section. */
+.coach-tactical-evidence{margin:11px 0 17px;padding:13px;background:#15312b;border:1px solid #4a6e57;border-radius:9px}
+.coach-evidence-fact{margin:9px 0 0;border:1px solid #5c7b62;border-radius:8px;padding:13px;background:#1e3d34}
+.coach-evidence-fact-heading{display:flex;justify-content:space-between;align-items:start;gap:9px;flex-wrap:wrap}
+.coach-evidence-fact-heading strong{font-size:13px;color:#e6f2d9;line-height:1.4}
+.coach-evidence-fact-heading span{font-size:9px;color:#add7a6;border:1px solid #608564;border-radius:5px;padding:3px 6px;white-space:nowrap;font-weight:850}
+.coach-evidence-fact p,.coach-no-tactic{font-size:12px;color:#bfd8c2;line-height:1.7;margin:10px 0}
+.coach-evidence-actions{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;margin-top:13px}
+.coach-evidence-actions span{font-family:monospace;font-size:10px;color:#9cbba8}
+.coach-evidence-actions button{display:flex;align-items:center;gap:6px;border:1px solid #83ac70;border-radius:7px;background:#395a42;color:#e1f2d3;font-size:11px;font-weight:850;padding:9px}
+.coach-no-tactic{margin:9px 0 0}

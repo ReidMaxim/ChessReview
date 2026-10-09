@@ -158,6 +158,13 @@ for (const [label, url] of [
         throw new Error('Coach engine lines did not switch to deep investigation evidence.');
       }
       console.log('DEEP INVESTIGATION PASSED: legal matched-root best and played lines displayed.');
+      if (!(await page.getByTestId('tactical-evidence').count())) {
+        throw new Error('Completed investigation did not show evidence-backed coaching or a cautious fallback.');
+      }
+      if (await page.getByText('What could I have played instead?').count()) {
+        throw new Error('The redundant recommendation panel is still visible.');
+      }
+      console.log('TACTICAL EVIDENCE UI PASSED: verified findings are next to Coach prose; redundant panel removed.');
       // Cancellation must be visible immediately and must not let a
       // previous search overwrite another selected move.
       await page.getByRole('button', {name:'Next move'}).click();

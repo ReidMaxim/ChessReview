@@ -6,6 +6,7 @@ import { buildGameSummary, buildMoveInsight } from '../lib/insights';
 import { coachLines, describeConsequence, type CoachLine } from '../lib/coach-intelligence';
 import { formatScore } from '../lib/engine-utils';
 import type { InvestigationResult, InvestigationStage } from '../lib/investigation';
+import { extractTacticalEvidence } from '../lib/tactical-evidence';
 
 export type LinePreview = { anchorPly: number; kind: 'alternative' | 'consequence'; step: number };
 export type InvestigationView = {
@@ -35,6 +36,7 @@ type Props = {
   investigation: InvestigationView | null;
   onInvestigate: (ply: number) => void;
   onCancelInvestigation: () => void;
+  onReplayEvidence: (ply: number, step: number) => void;
 };
 
 function LineControl({
@@ -60,6 +62,7 @@ function LineControl({
 export default function CoachNotes({
   game, report, selectedPly, hintPly, onNavigate, onHint,
   preview, onPreview, onStep, onClosePreview, investigation, onInvestigate, onCancelInvestigation,
+  onReplayEvidence,
 }: Props) {
   const [technical, setTechnical] = useState(false);
   const summary = buildGameSummary(game, report);
@@ -68,6 +71,9 @@ export default function CoachNotes({
   const beforeView = hintPly === focus && selectedPly === focus - 1;
   const lines = coachLines(game, report, focus, investigation?.stage === 'complete' ? investigation.result : null);
   const consequence = insight && lines ? describeConsequence(game, focus, lines.consequence.steps) : null;
+  const evidence = investigation?.stage === 'complete' && investigation.result && game.moves[focus - 1]
+    ? extractTacticalEvidence(investigation.result, game.moves[focus - 1].color)
+    : null;
   const currentPreview = preview && preview.anchorPly === focus ? preview : null;
   const activeLine = currentPreview && lines ? lines[currentPreview.kind] : null;
 
@@ -75,7 +81,7 @@ export default function CoachNotes({
     <section className="coach-panel" aria-label="Coach Notes">
       <div className="coach-panel-head">
         <div className="coach-icon"><BookOpenCheck size={20}/></div>
-        <div><div className="micro-heading">PHASE 10A · CHESS INTELLIGENCE</div><h3>Coach Notes</h3></div>
+        <div><div className="micro-heading">PHASE 10B · CHESS INTELLIGENCE</div><h3>Coach Notes</h3></div>
         <span className="coach-proof-label">ENGINE + BOARD FACTS</span>
       </div>
       <div className="coach-summary">
@@ -109,7 +115,29 @@ export default function CoachNotes({
               ? 'At depth ' + report.depth + ', this was classified ' + insight.quality.toLowerCase() + '. The evaluation changed from ' + insight.scoreBefore + ' to ' + insight.scoreAfter + ' from White’s perspective.'
               : insight.assessment}</p>
 
-            {consequence && consequence.kind !== 'insufficient' && (
+            {evidence !== null && (
+              <div className="coach-tactical-evidence" data-testid="tactical-evidence">
+                <div className="coach-subheading small">What deeper analysis shows</div>
+                {evidence.length ? evidence.map(item => (
+                  <div className="coach-evidence-fact" key={item.kind + '-' + item.step}>
+                    <div className="coach-evidence-fact-heading">
+                      <strong>{item.headline}</strong>
+                      <span>{item.confidence === 'board-confirmed' ? 'BOARD-CONFIRMED' : 'ENGINE-SHOWN'}</span>
+                    </div>
+                    <p>{item.detail}</p>
+                    <div className="coach-evidence-actions">
+                      <span>{item.squares.join(' · ')}</span>
+                      <button onClick={() => onReplayEvidence(focus, item.step)}>
+                        <Play size={14}/> See it on the board
+                      </button>
+                    </div>
+                  </div>
+                )) : (
+                  <p className="coach-no-tactic">The deeper lines don't demonstrate a single clear tactical cause here. You can still compare both continuations below without guessing why one move is stronger.</p>
+                )}
+              </div>
+            )}
+            {evidence === null && consequence && consequence.kind !== 'insufficient' && (
               <div className="coach-key-point" data-testid="coach-consequence">
                 <strong>{consequence.headline}</strong>
                 <p>{consequence.description}</p>
@@ -177,7 +205,7 @@ export default function CoachNotes({
       {insight && (
           <div className="investigation-card" data-testid="investigation">
             <div className="investigation-title"><Crosshair size={16}/>
-              <strong>DEEPER INVESTIGATION</strong><span>PHASE 10A</span>
+              <strong>DEEPER INVESTIGATION</strong><span>PHASE 10B</span>
             </div>
             {investigation?.stage === 'complete' && investigation.result ? (
               <>

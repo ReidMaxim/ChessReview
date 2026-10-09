@@ -2,7 +2,7 @@
 
 **A free, open-source home for postgame chess review.** Designed to grow into a local Stockfish-powered chess coach—not a clone of Chess.com's interface.
 
-## Current milestone: 10A · Deeper comparative chess investigation
+## Current milestone: 10B · Verified tactical consequences
 
 The first working build provides:
 
@@ -62,7 +62,15 @@ GitHub Pages does not provide the cross-origin isolation needed for multithreade
 | 06.5 ✅ | Retain legal engine continuations, evidence-first commentary, selected verified tactical patterns and reversible line replay; optional LLM layer remains experimental |
 | 07 ✅ | Redesigned split-screen Command Deck, persistent board and controls, focused tools and Coach-first game-review flow |
 | 08 ✅ | Mobile responsive study view, bounded Stockfish caching, hidden-tab suspension, accessible dialogs and five-screen QA |
+| 10A ✅ | Same-root deep engine comparisons with cancellation and replay |
+| 10B ✅ | Conservative evidence for mate, material after recaptures, knight double attacks and absolute pins; false-positive tests |
 | Future (on hold) | Chess.com username import; saved games and voice remain future options |
+
+## Phase 10B — Tactical evidence and Coach priority
+
+Coach Notes now starts with the selected move's explanation instead of the investigative controls. The separate "What could I have played instead?" panel has been removed; replaying a better variation remains under **See it for yourself**. Deeper Investigation has moved to the bottom of the Coach panel.
+
+After a deeper investigation completes, Coach shows only evidence supported by legal continuations from the same original position: an immediate checkmate, an observed material imbalance after recaptures, a knight's double attack, or a newly created absolute pin. These observations are explicitly labeled **Board-confirmed** or **Engine-shown**; the latter describes an illustrative Stockfish line, not a proven forced result. Detectors compare against the best variation and suppress ordinary exchanges and unsupported geometry. Each evidence card can replay the relevant position on the main board. If no reliable tactical observation is found, the coach explicitly declines to invent one. More sophisticated causal reasoning, positional strategy, and further motif validation are future research.
 
 ## Phase 10A — Deep comparative investigation
 

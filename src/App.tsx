@@ -286,6 +286,18 @@ export default function App() {
     setLinePreview({ anchorPly: target, kind, step: 0 });
   }
 
+  function replayEvidence(target: number, step: number) {
+    if (!game || !reviewReport) return;
+    const lines = linesFor(target);
+    if (!lines?.consequence.steps.length) return;
+    setHintPly(null);
+    setPly(target);
+    setLinePreview({
+      anchorPly: target, kind: 'consequence',
+      step: Math.max(0, Math.min(step, lines.consequence.steps.length)),
+    });
+  }
+
   function moveLinePreview(step: number) {
     setLinePreview(prev => {
       if (!prev || !game || !reviewReport) return null;
@@ -438,7 +450,7 @@ export default function App() {
             <h1>Every move tells <em>a story.</em></h1>
             <p className="intro-copy">{mode === 'review' ? 'Import a finished game to explore every decision, with optional local Stockfish analysis.' : 'Experiment with legal moves, explore positions, and export your practice lines.'}</p>
           </div>
-          <div className="phase-label"><span className="phase-indicator">10A</span><span>DEEP INVESTIGATION<br /><b>COMPARE REAL ENGINE LINES</b></span></div>
+          <div className="phase-label"><span className="phase-indicator">10B</span><span>DEEP INVESTIGATION<br /><b>COMPARE REAL ENGINE LINES</b></span></div>
         </div>
 
         <div className="workspace-modes" role="group" aria-label="ChessReview workspace mode">
@@ -580,7 +592,7 @@ export default function App() {
                   investigationRef.current?.cancel();
                   investigationRef.current = null;
                   setInvestigation(current => current ? { ...current, stage: 'cancelled' } : null);
-                }}/>
+                }} onReplayEvidence={replayEvidence}/>
                     )
                     : (
                       <div className="cockpit-empty">
