@@ -521,3 +521,40 @@ h1 em{font-style:normal;color:#c2e4a1}
   .settings-modal{padding:19px}
 }
 @media(prefers-reduced-motion:reduce){.evaluation-white,.settings-switch-track,.settings-switch-track:after{transition:none}}
+
+/* Phase 08: touch-first compact cockpit; board stays available while studying */
+@media(max-width:699px) and (orientation:portrait){
+  .is-studying .page{padding:8px 9px 20px}
+  .is-studying .workspace-modes{margin-bottom:7px;padding:3px}
+  .is-studying .workspace-modes .mode-tip{display:none}
+  .is-studying .workspace-modes .mode-choice{flex:1;min-height:40px}
+  .studio-workspace{display:flex;flex-direction:column;gap:8px}
+  .studio-workspace .board-card{position:sticky;top:0;z-index:3;width:100%;max-width:none;background:#17282b;box-shadow:0 10px 22px #0009}
+  .studio-workspace .game-header,.studio-workspace .game-footer{min-height:34px;padding:4px 10px}
+  .studio-workspace .avatar{width:25px;height:25px;font-size:16px}
+  .studio-workspace .player-role{font-size:8px;margin:0}
+  .studio-workspace .player-name{font-size:10px}
+  .studio-workspace .board-mat{padding:5px}
+  .studio-workspace .board-playfield{max-width:min(100%,max(220px,calc(48svh - 65px)) + 27px)}
+  .studio-workspace .board-playfield.no-eval-bar{max-width:min(100%,max(220px,calc(48svh - 65px)))}
+  .studio-workspace .board-hud{padding:5px 9px;min-height:33px;gap:5px}
+  .studio-workspace .board-hud-kicker{display:none}
+  .studio-workspace .board-hud .big-san{font-size:12px}
+  .studio-workspace .board-hud-copy{padding:5px 8px;min-height:29px}
+  .studio-workspace .cockpit-panel{width:100%;height:max(415px,65svh);min-height:415px}
+  .cockpit-panel .cockpit-tab{min-height:44px}
+  .cockpit-panel .transport-btn{min-width:36px;min-height:42px}
+  .cockpit-panel .cockpit-action{min-height:37px}
+  .cockpit-panel .coach-replay-actions button,.cockpit-panel .coach-line-option button{min-height:41px}
+  .studio-workspace .board-replay-ribbon{padding:6px 8px;font-size:10px}
+}
+@media(max-width:380px) and (orientation:portrait){
+  .studio-workspace .game-header .elo,.studio-workspace .game-footer .elo{display:none}
+  .cockpit-review-state{letter-spacing:0}
+  .cockpit-tab{padding-left:2px;padding-right:2px}
+}
+@media(hover:none){
+  .cockpit-tab:focus-visible,.mode-choice:focus-visible,.transport-btn:focus-visible,.cockpit-action:focus-visible{
+    outline:2px solid #d6f4b3;outline-offset:2px
+  }
+}

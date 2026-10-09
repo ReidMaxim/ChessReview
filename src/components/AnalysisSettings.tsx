@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useDialogFocus } from '../lib/dialog-focus';
 import { Cpu, Settings2, X } from 'lucide-react';
 import type { AnalysisPreferences } from '../lib/preferences';
 
@@ -9,20 +9,14 @@ type Props = {
 };
 
 export default function AnalysisSettings({ preferences, onChange, onClose }: Props) {
-  useEffect(() => {
-    function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose();
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  const dialogRef = useDialogFocus(true, onClose);
 
   const set = (patch: Partial<AnalysisPreferences>) => onChange({ ...preferences, ...patch });
   return (
     <div className="modal-backdrop settings-backdrop" onMouseDown={event => {
       if (event.target === event.currentTarget) onClose();
     }}>
-      <section className="import-modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="analysis-settings-title">
+      <section className="import-modal settings-modal" role="dialog" aria-modal="true" aria-labelledby="analysis-settings-title" ref={dialogRef} tabIndex={-1}>
         <div className="modal-head">
           <div>
             <div className="micro-heading"><Settings2 size={13}/> LOCAL ANALYSIS</div>

@@ -22,6 +22,7 @@ import { GameReviewSession, type ReviewReport } from './lib/game-review';
 import { StockfishClient, type EngineState } from './lib/engine';
 import { formatScore, type Analysis } from './lib/engine-utils';
 import { parsePgn, type GameRecord } from './lib/pgn';
+import { useDialogFocus } from './lib/dialog-focus';
 
 function scoreLabel(result: string | undefined): string {
   if (result === '1-0') return 'White wins';
@@ -47,12 +48,14 @@ export default function App() {
   const [ply, setPly] = useState(0);
   const [orientation, setOrientation] = useState<'white' | 'black'>('white');
   const [importOpen, setImportOpen] = useState(false);
+  const importDialog = useDialogFocus(importOpen, () => setImportOpen(false));
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const movePanelRef = useRef<HTMLDivElement>(null);
   const [preferences, setPreferences] = useState<AnalysisPreferences>(readPreferences);
+  const [pageVisible, setPageVisible] = useState(() => typeof document === 'undefined' || !document.hidden);
   const depth = preferences.depth;
   const setDepth = (value: number) => setPreferences(prev => ({ ...prev, depth: value }));
   const setEngineEnabled = (enabled: boolean) => setPreferences(prev => ({ ...prev, enabled }));
@@ -70,7 +73,7 @@ export default function App() {
   // One on-demand Worker: suspend it for full-game review and line previews.
   // The preference remains on, so it resumes automatically afterward.
   const engineOn = preferences.enabled && Boolean(game) && mode === 'review'
-    && reviewStatus !== 'running' && hintPly === null && linePreview === null;
+    && pageVisible && reviewStatus !== 'running' && hintPly === null && linePreview === null;
 
   const annotated = useMemo(
     () => new Map(reviewReport?.rows.map(row => [row.ply, row.quality]) ?? []),
@@ -79,6 +82,11 @@ export default function App() {
 
   useEffect(() => () => reviewRef.current?.cancel(), []);
   useEffect(() => savePreferences(preferences), [preferences]);
+  useEffect(() => {
+    const onVisibility = () => setPageVisible(!document.hidden);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
 
   useEffect(() => {
     if (tool === 'coach') toolScrollRef.current?.scrollTo({ top: 0 });
@@ -128,7 +136,7 @@ export default function App() {
     if (active instanceof HTMLElement) {
       active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     }
-  }, [ply, game]);
+  }, [ply, game, tool]);
 
   // Start one Worker when opted in; reuse it as the reviewer navigates moves.
   useEffect(() => {
@@ -523,7 +531,7 @@ export default function App() {
 
       {importOpen && (
         <div className="modal-backdrop" onMouseDown={event => { if (event.currentTarget === event.target) setImportOpen(false); }}>
-          <section className="import-modal" role="dialog" aria-modal="true" aria-labelledby="import-title">
+          <section className="import-modal" role="dialog" aria-modal="true" aria-labelledby="import-title" ref={importDialog} tabIndex={-1}>
             <div className="modal-head"><div><div className="micro-heading">ADD TO WORKSPACE</div><h2 id="import-title">Import a game</h2></div><button className="plain-icon" onClick={() => setImportOpen(false)} aria-label="Close"><X size={21} /></button></div>
             <p>Paste a complete PGN from any chess platform. Everything is parsed locally—no login required.</p>
             <label htmlFor="pgn-input">PGN NOTATION</label>

@@ -1,7 +1,9 @@
 import { parseUciInfo, type Analysis } from './engine-utils';
+import { PositionAnalysisCache } from './analysis-cache';
 
 export type EngineState = 'loading' | 'ready' | 'analyzing' | 'complete' | 'paused' | 'error';
 type Request = { fen: string; depth: number; cancelled: boolean; latest: Analysis | null };
+const recentPositions = new PositionAnalysisCache(96);
 type Callbacks = {
   onState: (state: EngineState, message?: string) => void;
   onAnalysis: (result: Analysis | null) => void;
@@ -62,7 +64,11 @@ export class StockfishClient {
       const finished = this.active;
       this.active = null;
       if (!finished.cancelled) {
-        if (finished.latest) this.callbacks.onAnalysis({ ...finished.latest, complete: true });
+        if (finished.latest) {
+          const completed = { ...finished.latest, complete: true };
+          recentPositions.put(completed, finished.depth);
+          this.callbacks.onAnalysis(completed);
+        }
         this.callbacks.onState('complete');
       }
       this.runQueued();
@@ -81,6 +87,17 @@ export class StockfishClient {
 
   analyze(fen: string, depth: number) {
     if (this.closed) return;
+    const cached = recentPositions.get(fen, depth);
+    if (cached) {
+      this.queued = null;
+      if (this.active && !this.active.cancelled) {
+        this.active.cancelled = true;
+        this.worker.postMessage('stop');
+      }
+      this.callbacks.onAnalysis(cached);
+      this.callbacks.onState('complete');
+      return;
+    }
     this.queued = { fen, depth };
     this.callbacks.onAnalysis(null);
     if (this.active && !this.active.cancelled) {
