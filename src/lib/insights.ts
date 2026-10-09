@@ -2,12 +2,16 @@ import { Chess } from 'chess.js';
 import type { GameRecord } from './pgn';
 import type { ReviewReport, ReviewRow } from './game-review';
 import { formatScore } from './engine-utils';
+import { coachLines, describeConsequence } from './coach-intelligence';
 
 export type MoveInsight = {
   ply: number;
   heading: string;
   quality: ReviewRow['quality'];
   assessment: string;
+  /** Confidence-bounded explanation grounded in legal engine continuation. */
+  consequenceTitle: string;
+  consequence: string;
   observations: string[];
   comparison: string;
   bestSan: string | null;
@@ -73,16 +77,23 @@ export function buildMoveInsight(game: GameRecord, report: ReviewReport, ply: nu
   const sameAsBest = Boolean(best && best.san === played.san);
   const mateRelated = previous.kind === 'mate' || after.kind === 'mate';
 
+  const continuation = coachLines(game, report, ply)?.consequence.steps ?? [];
+  const consequence = describeConsequence(game, ply, continuation);
   let assessment = '';
   if (sameAsBest) {
-    assessment = 'Stockfish selected this same move as its first choice at the review depth.';
+    assessment = 'Nice find. That matches the engine’s first choice here.';
+  } else if (mateRelated && consequence.kind === 'mate') {
+    assessment = 'That move runs into a mating threat. The line below shows the critical move.';
   } else if (mateRelated) {
-    assessment = 'The engine sees a forced-mate situation around this move. The numerical loss and category are coarse estimates when mate scores are involved.';
+    assessment = 'There’s a serious mating threat here. The short engine line might not show every step, so avoid reading too much into the numeric score.';
   } else if (row.loss < 50) {
-    assessment = 'The position changed by less than half a pawn in the mover’s disadvantage at this search depth. This is a small engine-estimated difference.';
+    assessment = 'Nothing dramatic here. The engine sees only a small difference after this move.';
+  } else if (row.loss < 130) {
+    assessment = 'Not the cleanest move. The engine prefers a different plan, but the position is still worth playing through.';
+  } else if (row.loss < 260) {
+    assessment = 'This gives your opponent a better chance. The continuation below is the useful part: see what they can actually play.';
   } else {
-    assessment = 'At depth ' + report.depth + ', ' + player + ' gave up about ' +
-      (row.loss / 100).toFixed(2) + ' pawns of engine evaluation with this move. That measures the change in the position, not a proven tactical reason.';
+    assessment = 'Ouch — this changes the game quite a bit. Let’s look at what Stockfish expects your opponent to do next.';
   }
 
   const observations: string[] = [];
@@ -106,13 +117,13 @@ export function buildMoveInsight(game: GameRecord, report: ReviewReport, ply: nu
   const comparison = sameAsBest
     ? 'The move you played matches Stockfish’s leading suggestion.'
     : best
-      ? 'Stockfish preferred ' + best.san + ' from the position BEFORE ' + played.san +
-        '. It is an alternative to examine, not a claim that it forces a particular result.'
+      ? 'Instead, Stockfish would have started with ' + best.san + '. That is the engine’s first choice before ' + played.san + ' — compare the two lines yourself.'
       : 'A legal alternative was not available in the stored engine result for this position.';
 
   return {
     ply, heading: moveLabel(ply, played.san), quality: row.quality,
-    assessment, observations, comparison,
+    assessment, consequenceTitle: consequence.headline, consequence: consequence.description,
+    observations, comparison,
     bestSan: best?.san ?? null, bestUci: best?.uci ?? null, sameAsBest,
     scoreBefore: formatScore(previous), scoreAfter: formatScore(after),
   };
@@ -131,10 +142,9 @@ export function buildGameSummary(game: GameRecord, report: ReviewReport): GameSu
   const description = !rows.length
     ? 'The first positions are still being evaluated.'
     : first
-      ? String(critical.length) + ' moves in the analyzed portion crossed the mistake threshold. The largest estimated loss was ' +
-        moveLabel(first.ply, first.san) + ' (' + (first.loss / 100).toFixed(2) + ' pawns).'
-      : 'No moves in the analyzed portion crossed our mistake threshold at depth ' +
-        report.depth + '. That does not mean every move was optimal.';
+      ? 'The biggest turning point so far is ' + moveLabel(first.ply, first.san) +
+        '. It is one of ' + critical.length + ' moves worth a closer look. Start with that moment and follow the engine’s response.'
+      : 'No major mistakes stood out at this depth. That is encouraging, though a deeper search might uncover more.';
 
   return {
     reviewedMoves: rows.length, totalMoves: game.moves.length,
