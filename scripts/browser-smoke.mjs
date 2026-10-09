@@ -115,6 +115,26 @@ for (const [label, url] of [
       if (!(await page.getByRole('heading', { name: 'Coach Notes' }).count())) {
         throw new Error('Coach Notes not shown after game review.');
       }
+      // The instructional prose comes first; the deeper analysis waits at the end.
+      const orderedHeadings = await page.locator('.coach-panel').evaluate(panel => ({
+        assessment: panel.querySelector('.coach-assessment')?.getBoundingClientRect().top,
+        investigation: panel.querySelector('.investigation-card')?.getBoundingClientRect().top,
+        card: panel.querySelector('.coach-move-card')?.getBoundingClientRect().top,
+        last: panel.lastElementChild?.className,
+        oldPanel: panel.querySelector('.coach-alternative'),
+      }));
+      if (orderedHeadings.oldPanel || orderedHeadings.last !== 'investigation-card' &&
+          orderedHeadings.last !== undefined) {
+        // Investigation lives as the final logical element, outside the move card.
+        if (orderedHeadings.oldPanel || await page.locator('.coach-move-card .investigation-card').count()) {
+          throw Error('Coach prose should lead; deep investigation belongs below other sections.');
+        }
+      }
+      if (await page.locator('.coach-move-card .investigation-card').count() ||
+          await page.locator('.coach-panel > .investigation-card').count() !== 1) {
+        throw Error('Deeper investigation is not the last Coach section.');
+      }
+      console.log('COACH LAYOUT PASSED: move advice leads; deep investigation is outside the main notes.');
       const coachText = await page.locator('.coach-panel').innerText();
       if (!coachText.includes('Moves reviewed') || !coachText.includes('What the board confirms') ||
           !coachText.includes('W / B mistakes') || !coachText.includes('BEFORE')) {

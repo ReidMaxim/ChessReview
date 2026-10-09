@@ -66,7 +66,6 @@ export default function CoachNotes({
   const focus = hintPly !== null && selectedPly === hintPly - 1 ? hintPly : selectedPly;
   const insight = buildMoveInsight(game, report, focus);
   const beforeView = hintPly === focus && selectedPly === focus - 1;
-  const canShow = Boolean(insight?.bestUci && !insight.sameAsBest);
   const lines = coachLines(game, report, focus, investigation?.stage === 'complete' ? investigation.result : null);
   const consequence = insight && lines ? describeConsequence(game, focus, lines.consequence.steps) : null;
   const currentPreview = preview && preview.anchorPly === focus ? preview : null;
@@ -106,40 +105,6 @@ export default function CoachNotes({
                 <button onClick={() => onNavigate(insight.ply)}>Return</button>
               </div>
             )}
-            <div className="investigation-card" data-testid="investigation">
-              <div className="investigation-title"><Crosshair size={16}/>
-                <strong>DEEPER INVESTIGATION</strong><span>PHASE 10A</span>
-              </div>
-              {investigation?.stage === 'complete' && investigation.result ? (
-                <>
-                  <p className="investigation-intro">Two searches from the <b>same original position</b>. See Stockfish's preferred line beside its best response to the move actually played.</p>
-                  <div className="investigation-compare" role="group" aria-label="Deep engine comparison">
-                    <div><span>STOCKFISH'S FIRST CHOICE</span>
-                      <strong>{investigation.result.best.steps[0]?.san}</strong>
-                      <b>{formatScore(investigation.result.best.score)}</b>
-                      <small>Depth {investigation.result.best.depth}{investigation.result.best.bound !== 'exact' ? ' · ' + investigation.result.best.bound + ' bound' : ''}</small>
-                    </div>
-                    <div><span>YOUR PLAYED MOVE</span>
-                      <strong>{investigation.result.played.steps[0]?.san}</strong>
-                      <b>{formatScore(investigation.result.played.score)}</b>
-                      <small>Depth {investigation.result.played.depth}{investigation.result.played.bound !== 'exact' ? ' · ' + investigation.result.played.bound + ' bound' : ''}</small>
-                    </div>
-                  </div>
-                  <p className="investigation-footnote">Scores use White's perspective, not literal material counts. Continuations are verified, but neither line proves a unique cause or an inevitable outcome. These searches reached the depths shown, with a target of {investigation.result.requestedDepth}.</p>
-                </>
-              ) : investigation && ['loading','alternatives','played','verifying'].includes(investigation.stage) ? (
-                <div className="investigation-running" role="status" aria-live="polite">
-                  <span>{stageLabel[investigation.stage as InvestigationStage]}</span>
-                  <button onClick={onCancelInvestigation}>Cancel investigation</button>
-                </div>
-              ) : (
-                <>
-                  <p className="investigation-intro">Go beyond the fast review. Compare Stockfish's best alternatives with its response to <b>{insight.heading}</b>, without changing the game.</p>
-                  {investigation?.error && <p className="investigation-error" role="alert">{investigation.error}</p>}
-                  <button className="investigation-start" onClick={() => onInvestigate(focus)}>Investigate this move <ArrowRight size={16}/></button>
-                </>
-              )}
-            </div>
             <p className="coach-assessment">{technical
               ? 'At depth ' + report.depth + ', this was classified ' + insight.quality.toLowerCase() + '. The evaluation changed from ' + insight.scoreBefore + ' to ' + insight.scoreAfter + ' from White’s perspective.'
               : insight.assessment}</p>
@@ -159,12 +124,6 @@ export default function CoachNotes({
             </div>
             <div className="coach-subheading small">What the board confirms</div>
             <ul className="coach-observations">{insight.observations.map((fact,i) => <li key={i}>{fact}</li>)}</ul>
-            <div className="coach-alternative">
-              <div className="coach-alternative-title"><Eye size={16}/> What could I have played instead?</div>
-              <p>{insight.comparison}</p>
-              {canShow && !beforeView && <button onClick={() => onHint(insight.ply)} aria-label="Show best alternative on board"><Eye size={16}/> Show the alternative on the board</button>}
-              {beforeView && <span className="coach-alt-caption">Green arrow starts from the position before the move.</span>}
-            </div>
             {lines && (
               <div className="coach-evidence-lines">
                 {investigation?.stage === 'complete' && <p className="investigation-caption">DEEPER ENGINE CONTINUATIONS · FROM MATCHED ROOT</p>}
@@ -174,6 +133,11 @@ export default function CoachNotes({
                   selected={currentPreview?.kind === 'consequence'} onClick={() => onPreview(focus, 'consequence')}/>
                 <LineControl title="A stronger alternative" line={lines.alternative}
                   selected={currentPreview?.kind === 'alternative'} onClick={() => onPreview(focus, 'alternative')}/>
+                {insight.bestUci && !insight.sameAsBest && !beforeView && (
+                  <button className="coach-alt-inline" onClick={() => onHint(focus)} aria-label="Show best alternative on board">
+                    <Eye size={14}/> Preview the recommended first move
+                  </button>
+                )}
                 {currentPreview && activeLine && (
                   <div className="coach-replay-controls" role="group" aria-label="Engine line replay controls">
                     <div className="coach-replay-caption">
@@ -210,6 +174,42 @@ export default function CoachNotes({
       <div className="coach-caveat">
         Built from legal moves and local Stockfish searches at depth {report.depth}. Motifs are identified from shown variations and may not prove the overall reason for an evaluation swing. No generated chess claims, user data uploads or paid service.
       </div>
+      {insight && (
+          <div className="investigation-card" data-testid="investigation">
+            <div className="investigation-title"><Crosshair size={16}/>
+              <strong>DEEPER INVESTIGATION</strong><span>PHASE 10A</span>
+            </div>
+            {investigation?.stage === 'complete' && investigation.result ? (
+              <>
+                <p className="investigation-intro">Two searches from the <b>same original position</b>. See Stockfish's preferred line beside its best response to the move actually played.</p>
+                <div className="investigation-compare" role="group" aria-label="Deep engine comparison">
+                  <div><span>STOCKFISH'S FIRST CHOICE</span>
+                    <strong>{investigation.result.best.steps[0]?.san}</strong>
+                    <b>{formatScore(investigation.result.best.score)}</b>
+                    <small>Depth {investigation.result.best.depth}{investigation.result.best.bound !== 'exact' ? ' · ' + investigation.result.best.bound + ' bound' : ''}</small>
+                  </div>
+                  <div><span>YOUR PLAYED MOVE</span>
+                    <strong>{investigation.result.played.steps[0]?.san}</strong>
+                    <b>{formatScore(investigation.result.played.score)}</b>
+                    <small>Depth {investigation.result.played.depth}{investigation.result.played.bound !== 'exact' ? ' · ' + investigation.result.played.bound + ' bound' : ''}</small>
+                  </div>
+                </div>
+                <p className="investigation-footnote">Scores use White's perspective, not literal material counts. Continuations are verified, but neither line proves a unique cause or an inevitable outcome. These searches reached the depths shown, with a target of {investigation.result.requestedDepth}.</p>
+              </>
+            ) : investigation && ['loading','alternatives','played','verifying'].includes(investigation.stage) ? (
+              <div className="investigation-running" role="status" aria-live="polite">
+                <span>{stageLabel[investigation.stage as InvestigationStage]}</span>
+                <button onClick={onCancelInvestigation}>Cancel investigation</button>
+              </div>
+            ) : (
+              <>
+                <p className="investigation-intro">Go beyond the fast review. Compare Stockfish's best alternatives with its response to <b>{insight.heading}</b>, without changing the game.</p>
+                {investigation?.error && <p className="investigation-error" role="alert">{investigation.error}</p>}
+                <button className="investigation-start" onClick={() => onInvestigate(focus)}>Investigate this move <ArrowRight size={16}/></button>
+              </>
+            )}
+          </div>
+      )}
     </section>
   );
 }

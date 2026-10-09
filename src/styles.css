@@ -584,3 +584,8 @@ h1 em{font-style:normal;color:#c2e4a1}
 .investigation-caption{font-size:10px;letter-spacing:1px;color:#c4e7ab;font-weight:850;margin:4px 0 12px}
 @media(max-width:380px){.investigation-card{padding:11px}.investigation-compare>div{padding:9px}.investigation-compare strong{font-size:18px}.investigation-compare span{font-size:8px}}
 @media(prefers-reduced-motion:reduce){.investigation-running span:before{animation:none}}
+
+/* Phase 10B: Coach commentary before tools; investigation is the very last panel. */
+.cockpit-panel .coach-panel>.investigation-card{order:5;margin:17px 0 0}
+.coach-alt-inline{display:inline-flex;gap:7px;align-items:center;padding:9px 11px;background:#203b30;border:1px solid #56765c;border-radius:7px;color:#cfe5bd;font-size:11px;font-weight:750;margin:10px 0 0}
+.coach-alt-inline:hover{background:#2c513a}
