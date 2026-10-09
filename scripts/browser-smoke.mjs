@@ -95,15 +95,25 @@ for (const [label, url] of [
       const target = await page.locator('.sandbox-panel').count();
       if (!target) throw Error('Sandbox panel missing.');
 
-      const moveByClick = async (file, rank) => {
-        const rect = await page.locator('cg-board').boundingBox();
-        if (!rect) throw Error('Sandbox chessboard not visible.');
-        const col = file.charCodeAt(0) - 97;
-        const row = 8 - rank;
-        await page.mouse.click(rect.x + (col + 0.5) * rect.width / 8, rect.y + (row + 0.5) * rect.height / 8);
-      };
-      await moveByClick('e', 2);
-      await moveByClick('e', 4);
+      const boardBox = await page.locator('cg-board').boundingBox();
+      if (!boardBox) throw Error('Free Board drag target missing');
+      const point = (file, rank) => ({
+        x: boardBox.x + ((file.charCodeAt(0) - 97) + 0.5) * boardBox.width / 8,
+        y: boardBox.y + (8 - rank + 0.5) * boardBox.height / 8,
+      });
+      const from = point('e', 2);
+      const dest = point('e', 4);
+      await page.mouse.move(from.x, from.y);
+      await page.mouse.down();
+      await page.mouse.move(dest.x, dest.y, { steps: 20 });
+      await page.mouse.up();
+      const debugBoard = await page.evaluate(() => ({
+        selected: document.querySelector('cg-board square.selected')?.getAttribute('class'),
+        pieces: document.querySelectorAll('cg-board piece').length,
+        moves: document.querySelectorAll('.sandbox-move-chip').length,
+        turn: document.querySelector('.sandbox-turn strong')?.textContent,
+      }));
+      console.log('SANDBOX DRAG DEBUG', JSON.stringify(debugBoard));
       await page.waitForFunction(() => document.querySelector('.sandbox-move-chip')?.textContent?.includes('e4'), undefined, {timeout: 10000});
       await page.getByRole('button', { name: 'Undo sandbox move' }).click();
       if ((await page.locator('.sandbox-turn strong').innerText()) !== 'White to move') throw Error('Sandbox undo failed.');
@@ -113,7 +123,7 @@ for (const [label, url] of [
       if (await page.locator('.sandbox-move-chip').count()) throw Error('Sandbox reset failed.');
       await page.getByRole('button', { name: 'Open Game Review' }).click();
       if (!(await page.getByText('Smoke Game').count())) throw Error('Imported PGN was lost when switching modes.');
-      console.log('FREE BOARD PASSED: legal click moves, undo/redo/reset and imported game preserved.');
+      console.log('FREE BOARD PASSED: legal drag moves, undo/redo/reset and imported game preserved.');
     }
   } catch (e) {
     console.error(label + ' ERROR:', String(e));
