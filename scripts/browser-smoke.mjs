@@ -58,6 +58,22 @@ for (const [label, url] of [
       const next = (await page.locator('.move-chip.active').textContent())?.trim();
       if (next !== 'e5') throw new Error('Expected navigation to 1... e5; got ' + next);
       console.log('REGRESSION PASSED: no sample at startup; PGN import begins at first move; next move works.');
+      await page.locator('#engine-depth').fill('8');
+      await page.getByRole('button', { name: 'Start Stockfish analysis' }).click();
+      await page.waitForFunction(() => {
+        const node = document.querySelector('[data-testid="engine-score"]');
+        return node && node.textContent && node.textContent.trim() !== '—';
+      }, undefined, { timeout: 60000 });
+      const engineScore = (await page.getByTestId('engine-score').innerText()).trim();
+      if (!/^[+-]\\d+\\.\\d{2}$|^(White|Black) mate in \\d+$|^Mate$/.test(engineScore)) {
+        throw new Error('Unexpected Stockfish score format: ' + engineScore);
+      }
+      console.log('STOCKFISH PASSED: engine returned real evaluation ' + engineScore);
+      await page.getByRole('button', { name: 'Pause Stockfish analysis' }).click();
+      if (!(await page.getByText('Analysis is paused.', { exact: false }).count())) {
+        throw new Error('Analysis pause did not return to standby');
+      }
+      console.log('STOCKFISH PAUSE PASSED: engine stopped and UI reset.');
     }
   } catch (e) {
     console.error(label + ' ERROR:', String(e));
