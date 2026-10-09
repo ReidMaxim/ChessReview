@@ -130,6 +130,32 @@ for (const [label, url] of [
       await page.getByRole('button', { name: 'Open Game Review' }).click();
       if (!(await page.getByText('Smoke Game').count())) throw Error('Imported PGN was lost when switching modes.');
       console.log('FREE BOARD PASSED: legal drag moves, undo/redo/reset and imported game preserved.');
+
+      // A deliberately weak opening verifies the *pre-move* engine hint.
+      await page.locator('.top-import').click();
+      await page.locator('#pgn-input').fill('[Event "Coaching Fixture"]\n[Result "0-1"]\n\n1. f3 e5 2. g4 Qh4# 0-1');
+      await page.getByRole('button', { name: 'Load PGN' }).click();
+      await page.locator('#review-depth').press('Home');
+      await page.getByRole('button', { name: 'Run full game review' }).click();
+      await page.waitForFunction(() => document.querySelector('.review-estimate-note')?.textContent?.includes('Review complete.'), undefined, { timeout: 90000 });
+      if ((await page.locator('.coach-move-heading strong').innerText()) !== '1. f3') {
+        throw new Error('Coach Notes did not start on the first move.');
+      }
+      await page.getByRole('button', { name: 'Show best alternative on board' }).click();
+      if (!(await page.locator('.coach-before-banner').count())) {
+        throw new Error('Coach did not switch to pre-move alternative view.');
+      }
+      if (!(await page.locator('.move-progress').innerText()).includes('START POSITION')) {
+        throw new Error('Alternative arrow did not step back to the proper position.');
+      }
+      if ((await page.locator('.coach-move-heading strong').innerText()) !== '1. f3') {
+        throw new Error('Coach Notes lost move context when previewing the alternative.');
+      }
+      await page.locator('.coach-before-banner button').click();
+      if ((await page.locator('.move-chip.active').innerText()).trim() !== 'f3') {
+        throw new Error('Return from alternative did not restore the played move.');
+      }
+      console.log('COACH ALTERNATIVE PASSED: viewed pre-move engine hint and restored original move.');
     }
   } catch (e) {
     console.error(label + ' ERROR:', String(e));
