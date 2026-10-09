@@ -16,6 +16,8 @@ export type ReviewReport = {
   depth: number;
   scores: (Score | null)[];
   bestMoves: (string | null)[];
+  /** Principal variations in UCI format, rooted at each indexed game position. */
+  variations: string[][];
   rows: ReviewRow[];
   completed: number;
   total: number;
@@ -63,14 +65,14 @@ export function terminalScore(fen: string): Score | null {
   return null;
 }
 
-export function buildReport(game: GameRecord, depth: number, scores: (Score | null)[], bestMoves: (string | null)[], completed: number): ReviewReport {
+export function buildReport(game: GameRecord, depth: number, scores: (Score | null)[], bestMoves: (string | null)[], completed: number, variations: string[][] = []): ReviewReport {
   const rows: ReviewRow[] = [];
   for (let i = 1; i <= completed; i++) {
     const before = scores[i - 1];
     const after = scores[i];
     if (before && after) rows.push(classifyMove(before, after, game.moves[i - 1], bestMoves[i - 1]));
   }
-  return { depth, scores: scores.slice(), bestMoves: bestMoves.slice(), rows, completed, total: game.moves.length + 1 };
+  return { depth, scores: scores.slice(), bestMoves: bestMoves.slice(), variations: variations.map(line => line.slice()), rows, completed, total: game.moves.length + 1 };
 }
 
 /**
@@ -84,6 +86,7 @@ export class GameReviewSession {
   private mostRecent: Analysis | null = null;
   private scores: (Score | null)[];
   private bestMoves: (string | null)[];
+  private variations: string[][];
   private timer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
@@ -97,6 +100,7 @@ export class GameReviewSession {
   ) {
     this.scores = Array(game.positions.length).fill(null);
     this.bestMoves = Array(game.positions.length).fill(null);
+    this.variations = Array.from({ length: game.positions.length }, () => []);
   }
 
   start() {
@@ -151,13 +155,14 @@ export class GameReviewSession {
     }
     this.scores[this.index] = this.mostRecent.score;
     this.bestMoves[this.index] = this.mostRecent.pv[0] ?? null;
+    this.variations[this.index] = this.mostRecent.pv.slice(0, 16);
     this.index++;
     this.callbacks.onProgress(this.report());
     this.analyzePosition();
   }
 
   private report() {
-    return buildReport(this.game, this.depth, this.scores, this.bestMoves, this.index);
+    return buildReport(this.game, this.depth, this.scores, this.bestMoves, this.index, this.variations);
   }
 
   private fail(message: string) {
