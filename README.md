@@ -64,6 +64,10 @@ GitHub Pages does not provide the cross-origin isolation needed for multithreade
 | 08 ✅ | Mobile responsive study view, bounded Stockfish caching, hidden-tab suspension, accessible dialogs and five-screen QA |
 | Future (on hold) | Chess.com username import; saved games and voice remain future options |
 
+## Phase 10 — Research, not yet implemented
+
+[Coach Intelligence 2.0 technical research and implementation plan](docs/PHASE_10_RESEARCH.md). Research targets matched-root Stockfish comparisons, conservative tactical evidence, replayable better alternatives, natural-language coaching and rigorous tests. The interactive sharing/export concept is parked for a later phase.
+
 ## Phase 08 — Polish and reliability
 
 - **Small-screen study mode:** phone portrait view uses a condensed board and a scrollable Command Deck, aiming to keep both usable together. Touch targets are enlarged and breakpoints adapt from 320px phones through desktop widths.
