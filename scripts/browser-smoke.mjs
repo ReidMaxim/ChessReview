@@ -90,7 +90,7 @@ for (const [label, url] of [
       }
       const coachText = await page.locator('.coach-panel').innerText();
       if (!coachText.includes('Moves reviewed') || !coachText.includes('What the board confirms') ||
-          !coachText.includes('White') || !coachText.includes('Black')) {
+          !coachText.includes('W / B mistakes') || !coachText.includes('BEFORE')) {
         throw new Error('Coach Notes game summary or evidence missing: ' + coachText.slice(0, 350));
       }
       await page.getByRole('button', { name: 'Previous move' }).click();
