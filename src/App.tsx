@@ -3,6 +3,7 @@ import { Chess } from 'chess.js';
 import {
   ArrowLeft, ArrowRight, BookOpen, Check, ChevronsLeft, ChevronsRight,
   Clipboard, Copy, ExternalLink, FlipHorizontal, Github, Keyboard,
+  ListOrdered, BarChart3, BrainCircuit, Cpu, PlayCircle, CircleStop,
   Upload, X,
 } from 'lucide-react';
 import Board from './components/Board';
@@ -15,7 +16,7 @@ import { coachLines } from './lib/coach-intelligence';
 import { validatedBestMove } from './lib/insights';
 import { GameReviewSession, type ReviewReport } from './lib/game-review';
 import { StockfishClient, type EngineState } from './lib/engine';
-import type { Analysis } from './lib/engine-utils';
+import { formatScore, type Analysis } from './lib/engine-utils';
 import { parsePgn, type GameRecord } from './lib/pgn';
 
 function scoreLabel(result: string | undefined): string {
@@ -29,10 +30,14 @@ function name(game: GameRecord | null, side: 'White' | 'Black') {
   return game?.headers[side] || side + ' pieces';
 }
 
+type DeckTool = 'moves' | 'review' | 'coach' | 'engine';
+
 export default function App() {
   // Open to the ordinary starting position, with no fictitious game loaded.
   const [game, setGame] = useState<GameRecord | null>(null);
   const [mode, setMode] = useState<'review' | 'sandbox'>('review');
+  const [tool, setTool] = useState<DeckTool>('moves');
+  const toolScrollRef = useRef<HTMLDivElement>(null);
   const [sandbox, setSandbox] = useState<SandboxState>(() => createSandbox());
   const [sandboxOrientation, setSandboxOrientation] = useState<'white' | 'black'>('white');
   const [ply, setPly] = useState(0);
@@ -62,6 +67,10 @@ export default function App() {
   );
 
   useEffect(() => () => reviewRef.current?.cancel(), []);
+
+  useEffect(() => {
+    if (tool === 'coach') toolScrollRef.current?.scrollTo({ top: 0 });
+  }, [tool, ply, hintPly, linePreview?.step]);
 
   const totalMoves = game?.moves.length ?? 0;
   const currentMove = game && ply > 0 ? game.moves[ply - 1] : undefined;
@@ -199,16 +208,19 @@ export default function App() {
     setReviewError('');
     setReviewReport(null);
     setReviewStatus('running');
+    setTool('review');
     const session = new GameReviewSession(game, reviewDepth, {
       onProgress: setReviewReport,
       onComplete: report => {
         setReviewReport(report);
         setReviewStatus('complete');
+        setTool('coach');
         reviewRef.current = null;
       },
       onError: message => {
         setReviewError(message);
         setReviewStatus('error');
+        setTool('review');
         reviewRef.current = null;
       },
     });
@@ -236,6 +248,7 @@ export default function App() {
       setAnalysis(null);
       setGame(next);
       setMode('review');
+      setTool('moves');
       // Start at White's first move, not the game's final position.
       // Users can press Home to see the initial setup.
       setPly(1);
@@ -279,7 +292,7 @@ export default function App() {
     ? previewLine.steps[linePreview.step]?.uci ?? null : hintedMove ?? visibleAnalysis?.pv[0] ?? null;
 
   return (
-    <div className="app-shell">
+    <div className={'app-shell' + ((Boolean(game) || mode === 'sandbox') ? ' is-studying' : '')}>
       <header className="topbar">
         <div className="brand">
           <div className="brand-mark" aria-hidden="true">♞</div>
@@ -316,8 +329,8 @@ export default function App() {
           <SandboxWorkspace session={sandbox} setSession={setSandbox}
             orientation={sandboxOrientation} setOrientation={setSandboxOrientation}/>
         ) : (
-        <div className="workspace">
-          <section className="board-card" aria-label="Game board">
+        <div className="workspace studio-workspace">
+          <section className="board-card" aria-label="Game board" id="studio-board">
             <div className="game-header">
               <div className="player-stack">
                 <div className="avatar avatar-black">♚</div>
@@ -340,6 +353,17 @@ export default function App() {
                 </div>
               </div>
             )}
+            <div className="board-hud">
+              <div className="board-hud-current">
+                <span className="board-hud-kicker">{linePreview ? 'ENGINE VARIATION' : 'CURRENT POSITION'}</span>
+                <strong className="big-san">{linePreview
+                  ? (replayStep?.san || 'Start of line')
+                  : currentMove ? (currentMove.number + (currentMove.color === 'w' ? '. ' : '... ') + currentMove.san) : 'Starting position'}</strong>
+                {!linePreview && reviewReport?.scores[ply] && <span className="hud-evaluation">{formatScore(reviewReport.scores[ply]!)}</span>}
+              </div>
+              <button className="board-hud-copy" title="Copy current board position" aria-label="Copy board FEN" onClick={copyFen}><Copy size={14} /> FEN</button>
+              {notice && <span className="board-hud-notice" role="status">{notice}</span>}
+            </div>
             <div className="game-footer">
               <div className="player-stack">
                 <div className="avatar avatar-white">♔</div>
@@ -350,7 +374,7 @@ export default function App() {
             </div>
           </section>
 
-          <section className="review-card" aria-label="Game navigation and moves">
+          <section className="review-card cockpit-panel" aria-label="Game navigation and moves">
             <div className="review-head">
               <div className="review-title-group">
                 <div className="micro-heading">GAME FILE <span className="file-hash">/ 001</span></div>
@@ -364,6 +388,24 @@ export default function App() {
               <button className="plain-icon" title="Import another game" aria-label="Import another game" onClick={() => { setError(''); setImportOpen(true); }}><Clipboard size={19} /></button>
             </div>
 
+            <div className="cockpit-tabs" role="group" aria-label="Analysis tools" data-review-status={reviewStatus} data-tool={tool}>
+              <button className={'cockpit-tab' + (tool === 'moves' ? ' active' : '')} aria-label="Moves tab" aria-pressed={tool === 'moves'} onClick={() => setTool('moves')}><ListOrdered size={16}/><span>Moves</span></button>
+              <button className={'cockpit-tab' + (tool === 'review' ? ' active' : '')} aria-label="Review tab" aria-pressed={tool === 'review'} onClick={() => setTool('review')}><BarChart3 size={16}/><span>Review</span>{reviewStatus === 'running' && <i className="tab-busy-dot" aria-label="Running"/>}</button>
+              <button className={'cockpit-tab' + (tool === 'coach' ? ' active' : '')} aria-label="Coach tab" aria-pressed={tool === 'coach'} onClick={() => setTool('coach')}><BrainCircuit size={16}/><span>Coach</span>{reviewReport && <i className="tab-ready-dot" aria-label="Notes available"/>}</button>
+              <button className={'cockpit-tab' + (tool === 'engine' ? ' active' : '')} aria-label="Engine tab" aria-pressed={tool === 'engine'} onClick={() => setTool('engine')}><Cpu size={16}/><span>Engine</span></button>
+            </div>
+            <div className="cockpit-toolbar">
+              <div className="cockpit-review-state">
+                <span className={'cockpit-state-dot' + (reviewStatus === 'complete' ? ' complete' : reviewStatus === 'running' ? ' thinking' : '')}/>
+                <span>{!game ? 'AWAITING PGN' : reviewStatus === 'complete' ? 'GAME ANALYZED' : reviewStatus === 'running' ? 'STOCKFISH REVIEWING' : 'READY FOR ANALYSIS'}</span>
+              </div>
+              {reviewStatus === 'running'
+                ? <button className="cockpit-action stop" aria-label="Stop review from toolbar" onClick={cancelFullReview}><CircleStop size={15}/> Stop</button>
+                : <button className="cockpit-action" aria-label="Review full game from toolbar" onClick={startFullReview} disabled={!game}><PlayCircle size={15}/>{reviewReport ? 'Re-review' : 'Review game'}</button>}
+            </div>
+            <div className="cockpit-content" id="cockpit-content" ref={toolScrollRef} aria-label={tool === 'coach' ? 'Coach notes tool panel' : tool === 'review' ? 'Full game review tool panel' : tool === 'engine' ? 'Stockfish analysis tool panel' : 'Move history tool panel'}>
+              {tool === 'moves' && (
+                <div className="cockpit-tool-body cockpit-moves">
             <div className="timeline">
               <div className="section-heading"><span>MOVE HISTORY</span><span>{ply} / {totalMoves}</span></div>
               <div className="move-scroll" ref={movePanelRef}>
@@ -390,6 +432,47 @@ export default function App() {
               </div>
             </div>
 
+                </div>
+              )}
+              {tool === 'review' && (
+                <div className="cockpit-tool-body cockpit-review">
+            <GameReviewPanel available={Boolean(game)} status={reviewStatus} report={reviewReport}
+              error={reviewError} depth={reviewDepth} setDepth={setReviewDepth}
+              selectedPly={ply} onPly={(target) => { navigateTo(target); setTool('coach'); }} onRun={startFullReview} onCancel={cancelFullReview}/>
+
+                </div>
+              )}
+              {tool === 'coach' && (
+                <div className="cockpit-tool-body cockpit-coach">
+                  {game && reviewReport
+                    ? (
+<CoachNotes game={game} report={reviewReport} selectedPly={ply}
+                hintPly={hintPly} onNavigate={navigateTo} onHint={showAlternative}
+                preview={linePreview} onPreview={replayLine} onStep={moveLinePreview}
+                onClosePreview={() => setLinePreview(null)}/>
+                    )
+                    : (
+                      <div className="cockpit-empty">
+                        <div className="cockpit-empty-icon"><BrainCircuit size={27}/></div>
+                        <div className="micro-heading">UNLOCK YOUR COACH</div>
+                        <h3>{!game ? 'Bring in a game first.' : reviewStatus === 'running' ? 'Stockfish is studying your game.' : 'Give your game a closer look.'}</h3>
+                        <p>{!game ? 'Import a completed game to explore every decision.' : reviewStatus === 'running' ? 'Your notes will appear here when the full review finishes.' : 'Run a full review to get grounded explanations, tactical observations and legal engine continuations.'}</p>
+                        {!game
+                          ? <button className="primary-button" onClick={() => { setError(''); setImportOpen(true); }}><Upload size={15}/> Import a game</button>
+                          : reviewStatus !== 'running' && <button className="primary-button" onClick={startFullReview}><PlayCircle size={15}/> Review this game</button>}
+                      </div>
+                    )}
+                </div>
+              )}
+              {tool === 'engine' && (
+                <div className="cockpit-tool-body cockpit-engine">
+            <EnginePanel available={Boolean(game) && reviewStatus !== 'running'} enabled={engineOn} onToggle={() => { setHintPly(null); setEngineOn(on => !on); }}
+              depth={depth} onDepth={setDepth} status={engineStatus} message={engineError}
+              analysis={visibleAnalysis} fen={currentFen}/>
+
+                </div>
+              )}
+            </div>
             <div className="transport">
               <button className="transport-btn" aria-label="Go to beginning" title="Beginning (Home)" onClick={() => navigateTo(0)} disabled={!game || ply === 0}><ChevronsLeft size={20} /></button>
               <button className="transport-btn" aria-label="Previous move" title="Previous (←)" onClick={() => navigateTo(ply - 1)} disabled={!game || ply === 0}><ArrowLeft size={20} /></button>
@@ -398,40 +481,6 @@ export default function App() {
               <button className="transport-btn" aria-label="Go to end" title="End (End)" onClick={() => navigateTo(totalMoves)} disabled={!game || ply === totalMoves}><ChevronsRight size={20} /></button>
             </div>
 
-            <GameReviewPanel available={Boolean(game)} status={reviewStatus} report={reviewReport}
-              error={reviewError} depth={reviewDepth} setDepth={setReviewDepth}
-              selectedPly={ply} onPly={navigateTo} onRun={startFullReview} onCancel={cancelFullReview}/>
-
-            {game && reviewReport && (
-              <CoachNotes game={game} report={reviewReport} selectedPly={ply}
-                hintPly={hintPly} onNavigate={navigateTo} onHint={showAlternative}
-                preview={linePreview} onPreview={replayLine} onStep={moveLinePreview}
-                onClosePreview={() => setLinePreview(null)}/>
-            )}
-
-            <EnginePanel available={Boolean(game) && reviewStatus !== 'running'} enabled={engineOn} onToggle={() => { setHintPly(null); setEngineOn(on => !on); }}
-              depth={depth} onDepth={setDepth} status={engineStatus} message={engineError}
-              analysis={visibleAnalysis} fen={currentFen}/>
-
-            <div className="position-panel">
-              <div className="position-panel-head"><span className="micro-heading">POSITION INSPECTOR</span><span className="step-counter">{String(ply).padStart(2, '0')} / {String(totalMoves).padStart(2, '0')}</span></div>
-              <div className="position-focus">
-                <div className="position-symbol">{position.isCheckmate() ? '♚' : currentMove?.san.includes('+') ? '+' : '♞'}</div>
-                <div><span className="small-muted">{linePreview ? 'ENGINE LINE · NOT GAME PGN' : !game ? 'BOARD READY' : position.isCheckmate() ? 'CHECKMATE' : ply === 0 ? 'GAME START' : 'LAST MOVE'}</span>
-                  <div className="big-san">{linePreview ? (replayStep ? replayStep.san : 'Beginning of line') : currentMove ? (currentMove.number + (currentMove.color === 'w' ? '. ' : '... ') + currentMove.san) : 'Initial position'}</div>
-                </div>
-              </div>
-              <div className="inspector-bottom">
-                <span>{linePreview ? 'Exploring a verified engine continuation' : !game ? 'Import a PGN to begin' : position.isCheckmate() ? 'Game ended by checkmate' : position.turn() === 'w' ? 'White to move' : 'Black to move'}</span>
-                <button className="copy-button" onClick={copyFen}><Copy size={14} /> Copy FEN</button>
-              </div>
-              {notice && <p className="notice" role="status">{notice}</p>}
-            </div>
-
-            <div className="upcoming">
-              <div className="upcoming-icon"><BookOpen size={19} /></div>
-              <div><strong>Notes are grounded in chess evidence.</strong><p>Complete a game review to unlock Coach Notes: move-by-move commentary, a game recap, and legal Stockfish alternatives. Training puzzles remain a future idea.</p></div>
-            </div>
           </section>
         </div>
         )}
