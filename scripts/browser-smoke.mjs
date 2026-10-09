@@ -175,6 +175,9 @@ for (const [label, url] of [
         throw new Error('Evidence-first coach must offer a practical observation.');
       }
       console.log('COACH NARRATIVE PASSED: deeper findings use an instructive headline and practical takeaway.');
+      if (!(await page.locator('.coach-move-heading .coach-quality').count())) {
+        throw new Error('Move classification badge went missing after deeper analysis.');
+      }
       if (!(await page.getByTestId('tactical-evidence').count())) {
         throw new Error('Completed investigation did not show evidence-backed coaching or a cautious fallback.');
       }

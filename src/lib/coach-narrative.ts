@@ -94,7 +94,7 @@ export function composeCoachNarrative(
       return {
         status: 'engine-agrees',
         headline: 'Your move is Stockfish’s first choice in this deeper search.',
-        explanation: 'Both searches begin with ' + played.san + '. The evaluation or continuation may still change as Stockfish searches further, but this investigation does not offer a different first move.',
+        explanation: 'Both deeper searches begin with ' + played.san + '. The quick game review may have classified the move differently, but this deeper search does not offer a different first move. Further searching could still change the assessment.',
         takeaway: 'Look at the reply in the engine line and see what your move is trying to accomplish.',
         evidence: null, evidenceStep: null, source: 'investigation',
       };

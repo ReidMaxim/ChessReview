@@ -627,3 +627,6 @@ h1 em{font-style:normal;color:#c2e4a1}
 .coach-technical strong{font-size:10px;letter-spacing:1px;color:#c9e3b7}
 .coach-technical p{font-size:11px;line-height:1.65;color:#abc9b3;margin:9px 0}
 @media(max-width:530px){.cockpit-panel .coach-move-card .coach-story{padding:13px}.coach-story h4{font-size:16px}.coach-story p{font-size:12px}}
+
+/* Phase 10C: deeper engine agreement supersedes a stale shallow badge. */
+.coach-quality.coach-deep-pick{color:#e8f8d3;background:#3b6749;border:1px solid #92c58d}

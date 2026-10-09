@@ -106,7 +106,12 @@ export default function CoachNotes({
         </div>
         {insight ? (
           <>
-            <div className="coach-move-heading"><strong>{insight.heading}</strong><span className={'coach-quality coach-' + insight.quality.toLowerCase()}>{insight.quality}</span></div>
+            <div className="coach-move-heading"><strong>{insight.heading}</strong>
+              <span className={'coach-quality ' + (narrative?.status === 'engine-agrees' ? 'coach-deep-pick' : 'coach-' + insight.quality.toLowerCase())}
+                title={narrative?.status === 'engine-agrees' ? 'Deeper search prefers the played move; initial review label remains in Technical view.' : 'Classification from the quick full-game review.'}>
+                {narrative?.status === 'engine-agrees' ? 'Deep engine pick' : insight.quality}
+              </span>
+            </div>
             {beforeView && (
               <div className="coach-before-banner" role="status">
                 <Eye size={17}/>
