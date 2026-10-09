@@ -1,6 +1,7 @@
 import { Chess, type Square } from 'chess.js';
 import type { GameRecord } from './pgn';
 import type { ReviewReport } from './game-review';
+import type { InvestigationResult } from './investigation';
 
 const pieceName: Record<string, string> = {
   p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king',
@@ -73,14 +74,20 @@ export function replayEngineLine(fen: string, pv: string[] = [], limit = 10): Li
   return steps;
 }
 
-export function coachLines(game: GameRecord, report: ReviewReport, ply: number, deeper?: string[]): {
+export function coachLines(game: GameRecord, report: ReviewReport, ply: number, investigation?: InvestigationResult | null): {
   alternative: CoachLine; consequence: CoachLine;
 } | null {
   if (ply < 1 || ply > game.moves.length || ply >= report.completed) return null;
   const alternativeFen = game.positions[ply - 1];
   const consequenceFen = game.positions[ply];
-  const before = report.variations[ply - 1] ?? [];
-  const after = deeper ?? report.variations[ply] ?? [];
+  // A completed investigation compares these continuations from the SAME
+  // pre-move root. Remove the played move before replaying the opponent
+  // response from the resulting FEN.
+  const matched = investigation?.rootFen === alternativeFen &&
+    investigation.playedUci === game.moves[ply - 1].from + game.moves[ply - 1].to +
+      (game.moves[ply - 1].san.match(/=([QRBN])/i)?.[1]?.toLowerCase() ?? '');
+  const before = matched ? investigation.best.pv : report.variations[ply - 1] ?? [];
+  const after = matched ? investigation.played.pv.slice(1) : report.variations[ply] ?? [];
   return {
     alternative: { startFen: alternativeFen, label: 'alternative', steps: replayEngineLine(alternativeFen, before) },
     consequence: { startFen: consequenceFen, label: 'consequence', steps: replayEngineLine(consequenceFen, after) },

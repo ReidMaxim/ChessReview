@@ -17,6 +17,8 @@ import EnginePanel from './components/EnginePanel';
 import GameReviewPanel, { type ReviewStatus } from './components/GameReviewPanel';
 import CoachNotes, { type LinePreview } from './components/CoachNotes';
 import { coachLines } from './lib/coach-intelligence';
+import { InvestigationSession, type InvestigationStage, type InvestigationResult } from './lib/investigation';
+import type { InvestigationView } from './components/CoachNotes';
 import { validatedBestMove } from './lib/insights';
 import { GameReviewSession, type ReviewReport } from './lib/game-review';
 import { StockfishClient, type EngineState } from './lib/engine';
@@ -70,20 +72,35 @@ export default function App() {
   const [reviewError, setReviewError] = useState('');
   const [hintPly, setHintPly] = useState<number | null>(null);
   const [linePreview, setLinePreview] = useState<LinePreview | null>(null);
+  const [investigation, setInvestigation] = useState<InvestigationView | null>(null);
+  const investigationRef = useRef<InvestigationSession | null>(null);
+  const investigationCache = useRef(new Map<string, InvestigationResult>());
+  const deepRunning = investigation?.stage === 'loading' || investigation?.stage === 'alternatives'
+    || investigation?.stage === 'played' || investigation?.stage === 'verifying';
   // One on-demand Worker: suspend it for full-game review and line previews.
   // The preference remains on, so it resumes automatically afterward.
   const engineOn = preferences.enabled && Boolean(game) && mode === 'review'
-    && pageVisible && reviewStatus !== 'running' && hintPly === null && linePreview === null;
+    && pageVisible && reviewStatus !== 'running' && !deepRunning && hintPly === null && linePreview === null;
 
   const annotated = useMemo(
     () => new Map(reviewReport?.rows.map(row => [row.ply, row.quality]) ?? []),
     [reviewReport],
   );
 
-  useEffect(() => () => reviewRef.current?.cancel(), []);
+  useEffect(() => () => {
+    reviewRef.current?.cancel();
+    investigationRef.current?.cancel();
+  }, []);
   useEffect(() => savePreferences(preferences), [preferences]);
   useEffect(() => {
-    const onVisibility = () => setPageVisible(!document.hidden);
+    const onVisibility = () => {
+      setPageVisible(!document.hidden);
+      if (document.hidden && investigationRef.current) {
+        investigationRef.current.cancel();
+        investigationRef.current = null;
+        setInvestigation(current => current ? { ...current, stage: 'cancelled', result: undefined } : null);
+      }
+    };
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, []);
@@ -106,6 +123,76 @@ export default function App() {
     [game],
   );
 
+  function playedUci(target: number): string | null {
+    const move = game?.moves[target - 1];
+    if (!move) return null;
+    return move.from + move.to + (move.san.match(/=([QRBN])/i)?.[1]?.toLowerCase() ?? '');
+  }
+
+  function investigationKey(target: number): string | null {
+    const uci = playedUci(target);
+    return uci && game ? game.positions[target - 1] + '|' + uci : null;
+  }
+
+  function investigationFor(target: number): InvestigationResult | null {
+    const key = investigationKey(target);
+    return key ? investigationCache.current.get(key) ?? null : null;
+  }
+
+  function cancelInvestigation() {
+    investigationRef.current?.cancel();
+    investigationRef.current = null;
+    setInvestigation(null);
+  }
+
+  function investigateMove(target: number) {
+    if (!game || !reviewReport || reviewStatus === 'running' || target < 1 || target > game.moves.length) return;
+    const key = investigationKey(target);
+    const uci = playedUci(target);
+    if (!key || !uci) return;
+    cancelInvestigation();
+    const cached = investigationCache.current.get(key);
+    if (cached) {
+      setInvestigation({ ply: target, stage: 'complete', result: cached });
+      return;
+    }
+    setLinePreview(null);
+    setHintPly(null);
+    setPly(target);
+    engineRef.current?.dispose();
+    engineRef.current = null;
+    const session = new InvestigationSession(game.positions[target - 1], uci, {
+      onProgress: (stage: InvestigationStage) => {
+        if (investigationRef.current !== session) return;
+        setInvestigation({ ply: target, stage });
+      },
+      onComplete: result => {
+        if (investigationRef.current !== session) return;
+        investigationRef.current = null;
+        investigationCache.current.set(key, result);
+        // Keep session results bounded to the loaded game.
+        if (investigationCache.current.size > 24) {
+          const oldest = investigationCache.current.keys().next().value;
+          if (oldest) investigationCache.current.delete(oldest);
+        }
+        setInvestigation({ ply: target, stage: 'complete', result });
+      },
+      onError: error => {
+        if (investigationRef.current !== session) return;
+        investigationRef.current = null;
+        setInvestigation({ ply: target, stage: 'error', error });
+      },
+    });
+    investigationRef.current = session;
+    setInvestigation({ ply: target, stage: 'loading' });
+    session.start();
+  }
+
+  function linesFor(target: number) {
+    if (!game || !reviewReport) return null;
+    return coachLines(game, reviewReport, target, investigationFor(target));
+  }
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (mode !== 'review' || event.altKey || event.ctrlKey || event.metaKey || importOpen || settingsOpen) return;
@@ -114,7 +201,7 @@ export default function App() {
       if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
       event.preventDefault();
       if (linePreview) {
-        const lines = game && reviewReport ? coachLines(game, reviewReport, linePreview.anchorPly) : null;
+        const lines = linesFor(linePreview.anchorPly);
         const len = lines?.[linePreview.kind].steps.length ?? 0;
         const next = event.key === 'Home' ? 0 : event.key === 'End' ? len :
           Math.max(0, Math.min(len, linePreview.step + (event.key === 'ArrowRight' ? 1 : -1)));
@@ -129,7 +216,7 @@ export default function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [totalMoves, importOpen, settingsOpen, mode, linePreview, game, reviewReport]);
+  }, [totalMoves, importOpen, settingsOpen, mode, linePreview, game, reviewReport, investigation]);
 
   useEffect(() => {
     const active = movePanelRef.current?.querySelector('.move-chip.active');
@@ -171,6 +258,9 @@ export default function App() {
   }, [engineOn, game, currentFen, depth]);
 
   function navigateTo(target: number) {
+    cancelInvestigation();
+    const cached = investigationFor(target);
+    if (cached) setInvestigation({ ply: target, stage: 'complete', result: cached });
     setLinePreview(null);
     setHintPly(null);
     setPly(Math.max(0, Math.min(game?.moves.length ?? 0, target)));
@@ -187,7 +277,7 @@ export default function App() {
 
   function replayLine(target: number, kind: LinePreview['kind']) {
     if (!game || !reviewReport) return;
-    const lines = coachLines(game, reviewReport, target);
+    const lines = linesFor(target);
     if (!lines?.[kind].steps.length) return;
     setHintPly(null);
     setLinePreview({ anchorPly: target, kind, step: 0 });
@@ -196,7 +286,7 @@ export default function App() {
   function moveLinePreview(step: number) {
     setLinePreview(prev => {
       if (!prev || !game || !reviewReport) return null;
-      const lines = coachLines(game, reviewReport, prev.anchorPly);
+      const lines = linesFor(prev.anchorPly);
       const len = lines?.[prev.kind].steps.length ?? 0;
       return { ...prev, step: Math.max(0, Math.min(len, step)) };
     });
@@ -206,6 +296,7 @@ export default function App() {
     if (next === mode) return;
     setHintPly(null);
     setLinePreview(null);
+    cancelInvestigation();
     if (next === 'sandbox') {
       // Switching modes suspends the Worker but preserves preferences and the imported PGN.
       reviewRef.current?.cancel();
@@ -217,6 +308,8 @@ export default function App() {
 
   function startFullReview() {
     if (!game) return;
+    cancelInvestigation();
+    investigationCache.current.clear();
     setHintPly(null);
     setLinePreview(null);
     reviewRef.current?.cancel();
@@ -254,6 +347,8 @@ export default function App() {
   function loadPgn(value: string) {
     try {
       const next = parsePgn(value);
+      cancelInvestigation();
+      investigationCache.current.clear();
       reviewRef.current?.cancel();
       reviewRef.current = null;
       setReviewReport(null);
@@ -303,8 +398,7 @@ export default function App() {
     : null;
 
   // Engine line replay is strictly a temporary display, not a PGN edit.
-  const previewLine = linePreview && game && reviewReport
-    ? coachLines(game, reviewReport, linePreview.anchorPly)?.[linePreview.kind] : null;
+  const previewLine = linePreview ? linesFor(linePreview.anchorPly)?.[linePreview.kind] : null;
   const displayFen = previewLine
     ? (linePreview?.step ? previewLine.steps[linePreview.step - 1]?.fen ?? previewLine.startFen : previewLine.startFen)
     : currentFen;
@@ -477,7 +571,13 @@ export default function App() {
 <CoachNotes game={game} report={reviewReport} selectedPly={ply}
                 hintPly={hintPly} onNavigate={navigateTo} onHint={showAlternative}
                 preview={linePreview} onPreview={replayLine} onStep={moveLinePreview}
-                onClosePreview={() => setLinePreview(null)}/>
+                onClosePreview={() => setLinePreview(null)}
+                investigation={investigation?.ply === (hintPly !== null && ply === hintPly - 1 ? hintPly : ply) ? investigation : null}
+                onInvestigate={investigateMove} onCancelInvestigation={() => {
+                  investigationRef.current?.cancel();
+                  investigationRef.current = null;
+                  setInvestigation(current => current ? { ...current, stage: 'cancelled' } : null);
+                }}/>
                     )
                     : (
                       <div className="cockpit-empty">
