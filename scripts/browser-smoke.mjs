@@ -97,6 +97,26 @@ for (const [label, url] of [
       const movedCoach = await page.locator('.coach-move-heading strong').innerText();
       if (movedCoach !== '1. e4') throw Error('Coach Notes did not follow move navigation: ' + movedCoach);
       console.log('COACH NOTES PASSED: game summary, evaluation evidence, and move-specific navigation.');
+      const consequence = page.getByRole('button', { name: 'Replay what stockfish expects next on board' });
+      if (!await consequence.isEnabled()) throw new Error('Engine PV replay must be available after full review.');
+      await consequence.click();
+      if (!await page.getByRole('group', { name: 'Engine replay on main board' }).count()) {
+        throw new Error('Main board did not switch to engine line replay.');
+      }
+      const gameMoveBefore = await page.locator('.move-chip.active').innerText();
+      await page.getByRole('button', { name: 'Next move on main replay' }).click();
+      const replaySan = (await page.locator('.position-panel .big-san').innerText()).trim();
+      if (!replaySan || replaySan.includes('Initial position')) {
+        throw new Error('Engine replay did not advance to a legal move: ' + replaySan);
+      }
+      if ((await page.locator('.move-chip.active').innerText()) !== gameMoveBefore) {
+        throw new Error('Engine replay mutated the selected PGN move.');
+      }
+      await page.getByRole('button', { name: 'Exit main replay' }).click();
+      if (await page.getByRole('group', { name: 'Engine replay on main board' }).count()) {
+        throw new Error('Engine replay did not exit.');
+      }
+      console.log('ENGINE LINE REPLAY PASSED: board advances verified PV and preserves imported game.');
       await page.getByRole('button', { name: 'Open Free Board' }).click();
       if (!await page.getByRole('heading', { name: 'Your analysis sandbox' }).isVisible()) {
         throw Error('Sandbox tab did not open.');
