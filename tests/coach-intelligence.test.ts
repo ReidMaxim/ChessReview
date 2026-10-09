@@ -32,11 +32,11 @@ describe('Coach Intelligence — verified legal engine lines', () => {
   it('identifies geometric knight forks, without guaranteeing a win', () => {
     const fen = '2q4k/1r6/8/5N2/8/8/8/7K w - - 0 1';
     const line = replayEngineLine(fen, ['f5d6']);
-    expect(line[0].fork).toEqual(['rook on b7','queen on c8']); 
+    expect(new Set(line[0].fork)).toEqual(new Set(['rook on b7','queen on c8'])); 
     expect(line[0].fork).toHaveLength(2);
   });
   it('tracks an actual material capture rather than an inferred hanging piece', () => {
-    const fen = '3rk2k/8/8/8/8/8/3Q4/7K b - - 0 1';
+    const fen = '3r3k/8/8/8/8/8/3Q4/7K b - - 0 1';
     const line = replayEngineLine(fen,['d8d2']);
     expect(line[0].captured).toBe('queen');
     expect(line[0].san).toContain('xd2');
