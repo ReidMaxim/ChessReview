@@ -2,7 +2,7 @@
 
 **A free, open-source home for postgame chess review.** Designed to grow into a local Stockfish-powered chess coach—not a clone of Chess.com's interface.
 
-## Current milestone: 06 · Evidence-based Coach Notes
+## Current milestone: 06.5 · Chess Intelligence Upgrade
 
 The first working build provides:
 
@@ -18,6 +18,7 @@ The first working build provides:
 - Full-game review, evaluation timeline, classification badges, critical moves and interruptible progress
 - Separate Free Board with legal drag/click moves, promotions, undo/redo, reset, FEN load, and PGN/FEN export
 - Coach Notes: readable game recaps, per-move analysis, verified board facts, legal best-move alternatives and a before-position arrow
+- Enhanced coaching: saved Stockfish principal variations, legally replayable response and alternative lines, checkmate/capture/check and knight-fork evidence, a natural-language Coach view and optional Technical view
 
 **Not yet included:** interactive retry-the-move training puzzles, Chess.com username lookup, AI-generated tactical explanations, saved reviews or proprietary Chess.com accuracy metrics. We intentionally avoid claiming tactical reasons that are not proven by engine lines.
 
@@ -57,6 +58,7 @@ GitHub Pages does not provide the cross-origin isolation needed for multithreade
 | 04 ✅ | Dedicated Free Board practice workspace, distinct from imported-game review |
 | 05 (on hold) | Interactive blunder replay / coaching puzzles; postponed until the design is polished |
 | 06 ✅ | Grounded, rule-based Coach Notes, position-specific explanations, legal engine alternatives and game summary. Voice deferred. |
+| 06.5 ✅ | Retain legal engine continuations, evidence-first commentary, selected verified tactical patterns and reversible line replay; optional LLM layer remains experimental |
 | 07 (on hold) | Chess.com username import; saved games and voice remain future options |
 
 ## Stockfish analysis
@@ -95,7 +97,19 @@ Run **Review game** to unlock Coach Notes below the evaluation timeline. Select 
 5. An optional **Show the alternative on the board** action that moves the viewer back one ply and draws a green arrow from the correct pre-move position. **Return** restores the played move. No game notation is changed.
 6. A recap of moves reviewed, engine-matching moves, major threshold-crossing moves by side, checks and captures, and up to four biggest evaluation swings.
 
-All notes are local, deterministic and based on chess.js positions and stored Stockfish review scores. Engine depth matters. Mate-related score buckets are coarse, and the panel explicitly does not claim to provide verified tactical explanations or proprietary accuracy estimates. There is no paid service and no generated voice in this release.
+## Coach Intelligence Upgrade (06.5)
+
+Our first Coach Notes implementation could quantify an error without telling you what followed. The upgrade adds an evidence chain:
+
+1. During a full-game Stockfish review, ChessReview stores up to 16 UCI moves from the engine's principal variation for **each** analyzed position, not only the top move and score.
+2. For the selected played move, the **consequence line** starts from the position *after* it; the **better alternative line** starts from the position *before* it. Both are validated through chess.js. Invalid or interrupted PVs are truncated, never treated as factual moves.
+3. The coach can discuss visible engine-line evidence: a legal immediate mate, a check, a valuable piece actually captured in the shown line, or a knight's geometric attack on two valuable pieces. It does not assert that a possible capture guarantees a net win.
+4. **Replay on the board** shows each line on the main viewer with Next/Previous and Exit controls, without changing imported PGN moves, the position index, or the sandbox. A prominent ENGINE LINE ribbon distinguishes counterfactual continuations from what happened in the actual game.
+5. **Coach** prose leads with accessible explanations, while **Technical** mode provides depth and score numbers. No LLM or paid API is required.
+
+The tool still cannot prove why all positional evaluation changes occur; at shallow depth it may miss combinations, and its PV is one plausible engine continuation rather than a full proof. The future optional AI-language stage must take only verified structured chess evidence as input and should never invent tactical reasons. No LLM model is downloaded or run in this release.
+
+All notes are local, deterministic and based on chess.js positions and stored Stockfish review scores. Engine depth matters. Mate-related score buckets are coarse, and the panel does not claim proprietary accuracy estimates. There is no paid service and no generated voice in this release.
 
 ## Free Board / Analysis Sandbox
 
@@ -109,6 +123,13 @@ Select **Free Board** to open a completely separate study board:
 6. Switch back to Game Review without losing the imported PGN or its analysis results; the sandbox retains its own position during the session.
 
 Engine analysis is **deliberately disabled** in Free Board. This prevents the separate practice workflow from becoming a real-time competitive match assistant. To study Stockfish suggestions, import a finished PGN into Game Review instead.
+
+## Deferred enhancements
+
+- A second on-demand deeper search of selected critical positions, with a longer continuation and optionally MultiPV for competing moves.
+- More rigorously verified tactics (pins, skewers, tactical exchanges), plus positional features validated against known chess positions.
+- Optional browser-based or local LLM rewriting of **structured evidence**, not the chess analysis itself. No hidden cloud transmission, and an equally useful non-AI default.
+- Chess.com username import and Blunder Trainer remain on hold per project priorities.
 
 ## Design boundaries
 
