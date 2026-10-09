@@ -103,6 +103,17 @@ for (const [label, url] of [
       });
       const from = point('e', 2);
       const dest = point('e', 4);
+      console.log('SANDBOX HITTEST BEFORE', JSON.stringify(await page.evaluate(({from,dest}) => ({
+        from: document.elementFromPoint(from.x,from.y)?.outerHTML.slice(0,300),
+        dest: document.elementFromPoint(dest.x,dest.y)?.outerHTML.slice(0,300),
+        box: document.querySelector('cg-board')?.getBoundingClientRect().toJSON(),
+      }), {from,dest})));
+      await page.mouse.click(from.x,from.y);
+      console.log('SANDBOX SELECTED AFTER CLICK', JSON.stringify(await page.evaluate(() => ({
+        selected: document.querySelector('cg-board square.selected')?.outerHTML,
+        destinations: document.querySelectorAll('cg-board square.move-dest').length,
+        dragged: document.querySelector('cg-board piece.dragging')?.outerHTML,
+      }))));
       await page.mouse.move(from.x, from.y);
       await page.mouse.down();
       await page.mouse.move(dest.x, dest.y, { steps: 20 });
