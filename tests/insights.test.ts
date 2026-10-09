@@ -19,7 +19,7 @@ describe('Evidence-grounded Coach Notes', () => {
     expect(note?.quality).toBe('Mistake');
     expect(note?.scoreBefore).toBe('+0.20');
     expect(note?.scoreAfter).toBe('+2.10');
-    expect(note?.comparison).toContain('BEFORE e5');
+    expect(note?.comparison).toContain('before e5');
   });
 
   it('never suggests a malformed or illegal engine move', () => {
