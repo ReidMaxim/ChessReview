@@ -58,6 +58,7 @@ for (const [label, url] of [
       const next = (await page.locator('.move-chip.active').textContent())?.trim();
       if (next !== 'e5') throw new Error('Expected navigation to 1... e5; got ' + next);
       console.log('REGRESSION PASSED: no sample at startup; PGN import begins at first move; next move works.');
+      await page.getByRole('button', { name: 'Engine tab' }).click();
       await page.locator('#engine-depth').press('Home');
       await page.getByRole('button', { name: 'Start Stockfish analysis' }).click();
       await page.waitForFunction(() => {
@@ -74,9 +75,12 @@ for (const [label, url] of [
         throw new Error('Analysis pause did not return to standby');
       }
       console.log('STOCKFISH PAUSE PASSED: engine stopped and UI reset.');
+      await page.getByRole('button', { name: 'Review tab' }).click();
+      await page.getByRole('button', { name: 'Review tab' }).click();
       await page.locator('#review-depth').press('Home');
       await page.getByRole('button', { name: 'Run full game review' }).click();
-      await page.waitForFunction(() => document.querySelector('.review-estimate-note')?.textContent?.includes('Review complete.'), undefined, { timeout: 90000 });
+      await page.waitForFunction(() => document.querySelector('.cockpit-tabs')?.getAttribute('data-review-status') === 'complete', undefined, { timeout: 90000 });
+      await page.getByRole('button', { name: 'Review tab' }).click();
       const values = await page.locator('.quality-stat strong').allTextContents();
       if (values.reduce((sum, value) => sum + Number(value), 0) !== 4) {
         throw new Error('Full review failed to classify four moves: ' + JSON.stringify(values));
@@ -85,6 +89,7 @@ for (const [label, url] of [
         throw new Error('No evaluation graph rendered.');
       }
       console.log('FULL GAME REVIEW PASSED: 5 evaluated positions, 4 classified moves, SVG graph rendered.');
+      await page.getByRole('button', { name: 'Coach tab' }).click();
       if (!(await page.getByRole('heading', { name: 'Coach Notes' }).count())) {
         throw new Error('Coach Notes not shown after game review.');
       }
@@ -105,7 +110,7 @@ for (const [label, url] of [
       }
       const gameMoveBefore = await page.locator('.move-chip.active').innerText();
       await page.getByRole('button', { name: 'Next move on main replay' }).click();
-      const replaySan = (await page.locator('.position-panel .big-san').innerText()).trim();
+      const replaySan = (await page.locator('.board-hud .big-san').innerText()).trim();
       if (!replaySan || replaySan.includes('Initial position')) {
         throw new Error('Engine replay did not advance to a legal move: ' + replaySan);
       }
@@ -157,7 +162,9 @@ for (const [label, url] of [
       await page.getByRole('button', { name: 'Load PGN' }).click();
       await page.locator('#review-depth').press('Home');
       await page.getByRole('button', { name: 'Run full game review' }).click();
-      await page.waitForFunction(() => document.querySelector('.review-estimate-note')?.textContent?.includes('Review complete.'), undefined, { timeout: 90000 });
+      await page.waitForFunction(() => document.querySelector('.cockpit-tabs')?.getAttribute('data-review-status') === 'complete', undefined, { timeout: 90000 });
+      await page.getByRole('button', { name: 'Review tab' }).click();
+      await page.getByRole('button', { name: 'Coach tab' }).click();
       if ((await page.locator('.coach-move-heading strong').innerText()) !== '1. f3') {
         throw new Error('Coach Notes did not start on the first move.');
       }
@@ -176,6 +183,23 @@ for (const [label, url] of [
         throw new Error('Return from alternative did not restore the played move.');
       }
       console.log('COACH ALTERNATIVE PASSED: viewed pre-move engine hint and restored original move.');
+      // Command Deck usability: the board must remain visible when coach notes scroll.
+      await page.locator('.cockpit-content').evaluate(el => { el.scrollTop = el.scrollHeight; });
+      const layout = await page.evaluate(() => {
+        const board = document.querySelector('#studio-board')?.getBoundingClientRect();
+        const deck = document.querySelector('.cockpit-panel')?.getBoundingClientRect();
+        return { board: board && {top:board.top,bottom:board.bottom,left:board.left,right:board.right},
+                 deck: deck && {top:deck.top,left:deck.left,right:deck.right},
+                 viewportHeight:innerHeight };
+      });
+      if (!layout.board || !layout.deck || !(layout.board.right < layout.deck.left + 10) ||
+          layout.board.top < -15 || layout.board.top >= layout.viewportHeight ||
+          layout.board.bottom > layout.viewportHeight + 15) {
+        throw new Error('Coach/board side-by-side visibility failed: ' + JSON.stringify(layout));
+      }
+      const deckButtons = await page.getByRole('button', {name: /^(Moves|Review|Coach|Engine) tab$/}).count();
+      if (deckButtons !== 4) throw new Error('Command Deck missing tool buttons');
+      console.log('COMMAND DECK PASSED: coach scrolls independently with board anchored in view.');
     }
   } catch (e) {
     console.error(label + ' ERROR:', String(e));
