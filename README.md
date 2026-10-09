@@ -2,7 +2,7 @@
 
 **A free, open-source home for postgame chess review.** Designed to grow into a local Stockfish-powered chess coach—not a clone of Chess.com's interface.
 
-## Current milestone: 04 · Free Board study sandbox
+## Current milestone: 06 · Evidence-based Coach Notes
 
 The first working build provides:
 
@@ -17,8 +17,9 @@ The first working build provides:
 - Optional Stockfish 19 Lite WebAssembly analysis, evaluations, best-move arrows, SAN variation and depth controls
 - Full-game review, evaluation timeline, classification badges, critical moves and interruptible progress
 - Separate Free Board with legal drag/click moves, promotions, undo/redo, reset, FEN load, and PGN/FEN export
+- Coach Notes: readable game recaps, per-move analysis, verified board facts, legal best-move alternatives and a before-position arrow
 
-**Not yet included:** interactive retry-the-move coaching puzzles, Chess.com username lookup, deeper training explanations, or proprietary Chess.com accuracy metrics. Review labels remain transparent heuristics.
+**Not yet included:** interactive retry-the-move training puzzles, Chess.com username lookup, AI-generated tactical explanations, saved reviews or proprietary Chess.com accuracy metrics. We intentionally avoid claiming tactical reasons that are not proven by engine lines.
 
 ## Run locally
 
@@ -54,9 +55,9 @@ GitHub Pages does not provide the cross-origin isolation needed for multithreade
 | 02 ✅ | Browser-side Stockfish evaluations, best-move arrows and principal variations |
 | 03 ✅ | On-demand whole-game evaluation graph, move-quality estimates, progress/cancel controls, critical-move list |
 | 04 ✅ | Dedicated Free Board practice workspace, distinct from imported-game review |
-| 05 | Critical positions, guided review, retry moves |
-| 06 | Verified chess explanations and optional system voice |
-| 07 | Chess.com public-game username importer and saved history |
+| 05 (on hold) | Interactive blunder replay / coaching puzzles; postponed until the design is polished |
+| 06 ✅ | Grounded, rule-based Coach Notes, position-specific explanations, legal engine alternatives and game summary. Voice deferred. |
+| 07 (on hold) | Chess.com username import; saved games and voice remain future options |
 
 ## Stockfish analysis
 
@@ -82,6 +83,19 @@ ChessReview evaluates the position **before** and **after** each move using Whit
 Mate scores are represented as decisive ±1500 centipawns for this approximate bucketing, while the chart clamps the view at ±5 pawns. Game-ending mate and drawn FENs are handled directly without making an engine request. Search-depth differences and shallow mate detection can change labels. We do **not** calculate a proprietary accuracy percentage or call these judgments authoritative.
 
 Game reviews are currently session-only: importing another PGN clears the current report. Analysis runs completely in the browser without sending PGNs to an API. Stop the review to release Stockfish's Worker.
+
+## Coach Notes (Phase 06)
+
+Run **Review game** to unlock Coach Notes below the evaluation timeline. Select a move or a highlighted turning point. The panel shows:
+
+1. Stockfish's recorded **before** and **after** position scores and that move's existing quality label.
+2. An explanation of what the measured centipawn loss actually means; no invented tactical causality or made-up plans.
+3. Verified board events: captures, check, checkmate, castling, pawn promotion, and immediately available legal captures (not asserted to win material).
+4. Stockfish's best legal alternative **from the position before the played move**, converted from UCI to SAN using chess.js.
+5. An optional **Show the alternative on the board** action that moves the viewer back one ply and draws a green arrow from the correct pre-move position. **Return** restores the played move. No game notation is changed.
+6. A recap of moves reviewed, engine-matching moves, major threshold-crossing moves by side, checks and captures, and up to four biggest evaluation swings.
+
+All notes are local, deterministic and based on chess.js positions and stored Stockfish review scores. Engine depth matters. Mate-related score buckets are coarse, and the panel explicitly does not claim to provide verified tactical explanations or proprietary accuracy estimates. There is no paid service and no generated voice in this release.
 
 ## Free Board / Analysis Sandbox
 

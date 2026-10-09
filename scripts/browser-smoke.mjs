@@ -85,6 +85,18 @@ for (const [label, url] of [
         throw new Error('No evaluation graph rendered.');
       }
       console.log('FULL GAME REVIEW PASSED: 5 evaluated positions, 4 classified moves, SVG graph rendered.');
+      if (!(await page.getByRole('heading', { name: 'Coach Notes' }).count())) {
+        throw new Error('Coach Notes not shown after game review.');
+      }
+      const coachText = await page.locator('.coach-panel').innerText();
+      if (!coachText.includes('Moves reviewed') || !coachText.includes('What the board confirms') ||
+          !coachText.includes('White') || !coachText.includes('Black')) {
+        throw new Error('Coach Notes game summary or evidence missing: ' + coachText.slice(0, 350));
+      }
+      await page.getByRole('button', { name: 'Previous move' }).click();
+      const movedCoach = await page.locator('.coach-move-heading strong').innerText();
+      if (movedCoach !== '1. e4') throw Error('Coach Notes did not follow move navigation: ' + movedCoach);
+      console.log('COACH NOTES PASSED: game summary, evaluation evidence, and move-specific navigation.');
       await page.getByRole('button', { name: 'Open Free Board' }).click();
       if (!await page.getByRole('heading', { name: 'Your analysis sandbox' }).isVisible()) {
         throw Error('Sandbox tab did not open.');

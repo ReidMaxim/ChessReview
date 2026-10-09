@@ -10,6 +10,8 @@ import SandboxWorkspace from './components/SandboxWorkspace';
 import { createSandbox, type SandboxState } from './lib/sandbox';
 import EnginePanel from './components/EnginePanel';
 import GameReviewPanel, { type ReviewStatus } from './components/GameReviewPanel';
+import CoachNotes from './components/CoachNotes';
+import { validatedBestMove } from './lib/insights';
 import { GameReviewSession, type ReviewReport } from './lib/game-review';
 import { StockfishClient, type EngineState } from './lib/engine';
 import type { Analysis } from './lib/engine-utils';
@@ -50,6 +52,7 @@ export default function App() {
   const [reviewDepth, setReviewDepth] = useState(8);
   const [reviewReport, setReviewReport] = useState<ReviewReport | null>(null);
   const [reviewError, setReviewError] = useState('');
+  const [hintPly, setHintPly] = useState<number | null>(null);
 
   const annotated = useMemo(
     () => new Map(reviewReport?.rows.map(row => [row.ply, row.quality]) ?? []),
@@ -80,6 +83,7 @@ export default function App() {
       if (target?.matches('input, textarea, select, [contenteditable="true"]')) return;
       if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
       event.preventDefault();
+      setHintPly(null);
       if (event.key === 'ArrowLeft') setPly(p => Math.max(0, p - 1));
       if (event.key === 'ArrowRight') setPly(p => Math.min(totalMoves, p + 1));
       if (event.key === 'Home') setPly(0);
@@ -128,8 +132,23 @@ export default function App() {
     if (engineOn && game) engineRef.current?.analyze(currentFen, depth);
   }, [engineOn, game, currentFen, depth]);
 
+  function navigateTo(target: number) {
+    setHintPly(null);
+    setPly(Math.max(0, Math.min(game?.moves.length ?? 0, target)));
+  }
+
+  function showAlternative(target: number) {
+    if (!game || !reviewReport) return;
+    const candidate = validatedBestMove(game.positions[target - 1], reviewReport.bestMoves[target - 1] ?? null);
+    if (!candidate) return;
+    setEngineOn(false);
+    setHintPly(target);
+    setPly(target - 1);
+  }
+
   function switchMode(next: 'review' | 'sandbox') {
     if (next === mode) return;
+    setHintPly(null);
     if (next === 'sandbox') {
       // Keep the PGN and results available for later, but suspend both engines.
       setEngineOn(false);
@@ -142,6 +161,7 @@ export default function App() {
 
   function startFullReview() {
     if (!game) return;
+    setHintPly(null);
     reviewRef.current?.cancel();
     setEngineOn(false);
     setReviewError('');
@@ -176,6 +196,7 @@ export default function App() {
       reviewRef.current?.cancel();
       reviewRef.current = null;
       setReviewReport(null);
+      setHintPly(null);
       setReviewStatus('idle');
       setReviewError('');
       setEngineOn(false);
@@ -207,6 +228,9 @@ export default function App() {
   const lastMove = currentMove ? [currentMove.from, currentMove.to] as [string, string] : undefined;
   const result = game?.headers.Result;
   const visibleAnalysis = engineOn && analysis?.fen === currentFen ? analysis : null;
+  const hintedMove = hintPly !== null && ply === hintPly - 1 && game && reviewReport
+    ? validatedBestMove(game.positions[hintPly - 1], reviewReport.bestMoves[hintPly - 1] ?? null)?.uci
+    : null;
 
   return (
     <div className="app-shell">
@@ -233,7 +257,7 @@ export default function App() {
             <h1>Every move tells <em>a story.</em></h1>
             <p className="intro-copy">{mode === 'review' ? 'Import a finished game to explore every decision, with optional local Stockfish analysis.' : 'Experiment with legal moves, explore positions, and export your practice lines.'}</p>
           </div>
-          <div className="phase-label"><span className="phase-indicator">04</span><span>STUDY WORKSPACE<br /><b>GAME REVIEW + FREE BOARD</b></span></div>
+          <div className="phase-label"><span className="phase-indicator">06</span><span>COACH NOTES<br /><b>ENGINE-GROUNDED INSIGHTS</b></span></div>
         </div>
 
         <div className="workspace-modes" role="group" aria-label="ChessReview workspace mode">
@@ -257,7 +281,7 @@ export default function App() {
             </div>
 
             <div className="board-mat">
-              <Board fen={currentFen} orientation={orientation} lastMove={lastMove} inCheck={position.inCheck()} bestMove={visibleAnalysis?.pv[0] ?? null} />
+              <Board fen={currentFen} orientation={orientation} lastMove={lastMove} inCheck={position.inCheck()} bestMove={hintedMove ?? visibleAnalysis?.pv[0] ?? null} />
             </div>
 
             <div className="game-footer">
@@ -301,8 +325,8 @@ export default function App() {
                   {pairs.map(pair => (
                     <div className="move-row" key={pair.number}>
                       <span className="move-number">{pair.number}.</span>
-                      <button className={'move-chip' + (ply === pair.whitePly ? ' active' : '') + (annotated.has(pair.whitePly) ? ' annotated annotated-' + annotated.get(pair.whitePly)!.toLowerCase() : '')} onClick={() => setPly(pair.whitePly)} aria-current={ply === pair.whitePly ? 'step' : undefined}>{pair.white?.san}</button>
-                      {pair.black ? <button className={'move-chip' + (ply === pair.blackPly ? ' active' : '') + (annotated.has(pair.blackPly) ? ' annotated annotated-' + annotated.get(pair.blackPly)!.toLowerCase() : '')} onClick={() => setPly(pair.blackPly)} aria-current={ply === pair.blackPly ? 'step' : undefined}>{pair.black.san}</button> : <span />}
+                      <button className={'move-chip' + (ply === pair.whitePly ? ' active' : '') + (annotated.has(pair.whitePly) ? ' annotated annotated-' + annotated.get(pair.whitePly)!.toLowerCase() : '')} onClick={() => navigateTo(pair.whitePly)} aria-current={ply === pair.whitePly ? 'step' : undefined}>{pair.white?.san}</button>
+                      {pair.black ? <button className={'move-chip' + (ply === pair.blackPly ? ' active' : '') + (annotated.has(pair.blackPly) ? ' annotated annotated-' + annotated.get(pair.blackPly)!.toLowerCase() : '')} onClick={() => navigateTo(pair.blackPly)} aria-current={ply === pair.blackPly ? 'step' : undefined}>{pair.black.san}</button> : <span />}
                     </div>
                   ))}
                 </div>
@@ -311,18 +335,23 @@ export default function App() {
             </div>
 
             <div className="transport">
-              <button className="transport-btn" aria-label="Go to beginning" title="Beginning (Home)" onClick={() => setPly(0)} disabled={!game || ply === 0}><ChevronsLeft size={20} /></button>
-              <button className="transport-btn" aria-label="Previous move" title="Previous (←)" onClick={() => setPly(p => Math.max(0, p - 1))} disabled={!game || ply === 0}><ArrowLeft size={20} /></button>
+              <button className="transport-btn" aria-label="Go to beginning" title="Beginning (Home)" onClick={() => navigateTo(0)} disabled={!game || ply === 0}><ChevronsLeft size={20} /></button>
+              <button className="transport-btn" aria-label="Previous move" title="Previous (←)" onClick={() => navigateTo(ply - 1)} disabled={!game || ply === 0}><ArrowLeft size={20} /></button>
               <div className="move-progress"><div className="progress-track"><div style={{ width: (totalMoves ? 100 * ply / totalMoves : 0) + '%' }} /></div><span>{!game ? 'NO GAME LOADED' : ply === 0 ? 'START POSITION' : currentMove?.number + (currentMove?.color === 'w' ? '. WHITE' : '... BLACK')}</span></div>
-              <button className="transport-btn" aria-label="Next move" title="Next (→)" onClick={() => setPly(p => Math.min(totalMoves, p + 1))} disabled={!game || ply === totalMoves}><ArrowRight size={20} /></button>
-              <button className="transport-btn" aria-label="Go to end" title="End (End)" onClick={() => setPly(totalMoves)} disabled={!game || ply === totalMoves}><ChevronsRight size={20} /></button>
+              <button className="transport-btn" aria-label="Next move" title="Next (→)" onClick={() => navigateTo(ply + 1)} disabled={!game || ply === totalMoves}><ArrowRight size={20} /></button>
+              <button className="transport-btn" aria-label="Go to end" title="End (End)" onClick={() => navigateTo(totalMoves)} disabled={!game || ply === totalMoves}><ChevronsRight size={20} /></button>
             </div>
 
             <GameReviewPanel available={Boolean(game)} status={reviewStatus} report={reviewReport}
               error={reviewError} depth={reviewDepth} setDepth={setReviewDepth}
-              selectedPly={ply} onPly={setPly} onRun={startFullReview} onCancel={cancelFullReview}/>
+              selectedPly={ply} onPly={navigateTo} onRun={startFullReview} onCancel={cancelFullReview}/>
 
-            <EnginePanel available={Boolean(game) && reviewStatus !== 'running'} enabled={engineOn} onToggle={() => setEngineOn(on => !on)}
+            {game && reviewReport && (
+              <CoachNotes game={game} report={reviewReport} selectedPly={ply}
+                hintPly={hintPly} onNavigate={navigateTo} onHint={showAlternative}/>
+            )}
+
+            <EnginePanel available={Boolean(game) && reviewStatus !== 'running'} enabled={engineOn} onToggle={() => { setHintPly(null); setEngineOn(on => !on); }}
               depth={depth} onDepth={setDepth} status={engineStatus} message={engineError}
               analysis={visibleAnalysis} fen={currentFen}/>
 
@@ -343,7 +372,7 @@ export default function App() {
 
             <div className="upcoming">
               <div className="upcoming-icon"><BookOpen size={19} /></div>
-              <div><strong>Explore free-form positions.</strong><p>Switch to Free Board above to make your own moves, import a FEN, and export PGN. Critical-position exercises and guided explanations come next.</p></div>
+              <div><strong>Notes are grounded in chess evidence.</strong><p>Complete a game review to unlock Coach Notes: move-by-move commentary, a game recap, and legal Stockfish alternatives. Training puzzles remain a future idea.</p></div>
             </div>
           </section>
         </div>
