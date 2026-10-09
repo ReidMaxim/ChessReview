@@ -261,6 +261,27 @@ for (const [label, url] of [
         throw new Error('Return from alternative did not restore the played move.');
       }
       console.log('COACH ALTERNATIVE PASSED: viewed pre-move engine hint and restored original move.');
+      // Integration fixture: the real Stockfish search must confirm that
+      // 2.g4 from Fool's Mate lets Black immediately deliver Qh4#.
+      await page.getByRole('button', { name: 'Go to beginning' }).click();
+      for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Next move' }).click();
+      await page.getByRole('button', { name: 'Coach tab' }).click();
+      if ((await page.locator('.coach-move-heading strong').innerText()) !== '2. g4') {
+        throw new Error('Mate fixture did not select the correct played move.');
+      }
+      await page.getByRole('button', { name: 'Investigate this move' }).click();
+      await page.getByText('That move allows checkmate immediately.').waitFor({ timeout: 45000 });
+      const mateFact = page.getByTestId('tactical-evidence');
+      if (!await mateFact.getByText('BOARD-CONFIRMED').count()) {
+        throw new Error('Immediately legal mate was not marked board-confirmed.');
+      }
+      await mateFact.getByRole('button', { name: 'See it on the board' }).click();
+      const observedSan = await page.locator('.board-hud .big-san').innerText();
+      if (observedSan.trim() !== 'Qh4#') {
+        throw new Error('Clicking verified mate did not replay Qh4#: ' + observedSan);
+      }
+      await page.getByRole('button', { name: 'Exit main replay' }).click();
+      console.log('REAL TACTIC PASSED: Stockfish mate is board-confirmed and replays at Qh4#.');
       await page.getByRole('button', { name: 'Go to end' }).click();
       const mateBar = Number(await page.getByTestId('evaluation-bar').getAttribute('data-white-share'));
       if (mateBar !== 0) throw new Error('Black checkmate should fill the bar black: ' + mateBar);
