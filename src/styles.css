@@ -329,3 +329,122 @@ h1 em{font-style:normal;color:#c2e4a1}
 .board-replay-ribbon button{border:1px solid #72926e;border-radius:6px;color:#dceacc;background:#1f342b;font-weight:800;padding:7px 11px;font-size:12px}
 .board-replay-ribbon button:disabled{opacity:.4}
 @media(max-width:530px){.coach-voice-options button{font-size:9px;padding:5px}.coach-subheading{flex-wrap:wrap}.coach-line-header{align-items:start;flex-direction:column}.board-replay-ribbon{padding:9px 11px}}
+
+
+/* Phase 07 — Command Deck: focused tools and a board that never gets lost. */
+.app-shell.is-studying{background:radial-gradient(ellipse 70% 35% at 45% -6%,#1d3937 0%,transparent 90%),#0c1619}
+.is-studying .topbar{height:67px}
+.is-studying .page{padding-top:17px}
+.is-studying .page>.eyebrow,.is-studying .page>.intro-row{display:none}
+.is-studying .workspace-modes{margin-bottom:14px}
+.is-studying .mode-tip{font-size:10px}
+.studio-workspace{align-items:start;gap:16px}
+.studio-workspace .board-card{border-color:#486157;box-shadow:0 22px 58px #0006,0 0 0 1px #7cac7c18}
+.studio-workspace .board-mat{padding:13px;background:radial-gradient(circle at 45% 30%,#28423c,#17292e 78%)}
+.studio-workspace .board-container{margin:0 auto;border-color:#2c4944;box-shadow:0 8px 30px #0006}
+.studio-workspace .game-header,.studio-workspace .game-footer{min-height:64px;padding:11px 16px}
+.studio-workspace .avatar{width:36px;height:36px;font-size:22px}
+.studio-workspace .player-role{font-size:9px;letter-spacing:1.4px;margin-bottom:2px}
+.studio-workspace .player-name{font-size:12px}
+.board-hud{display:flex;align-items:center;flex-wrap:wrap;gap:12px;justify-content:space-between;padding:12px 16px;background:linear-gradient(90deg,#1d3c35,#172c2d);border-top:1px solid #6fa66f30}
+.board-hud-current{min-width:0;display:flex;align-items:center;gap:10px;flex:1;flex-wrap:wrap}
+.board-hud-kicker{font-size:9px;color:#87b89e;letter-spacing:1.3px;font-weight:850}
+.board-hud .big-san{font-size:17px;margin:0;color:#eff4e6;letter-spacing:-.15px}
+.hud-evaluation{color:#d9eec2;border:1px solid #68936d;padding:5px 8px;border-radius:6px;background:#365b42;font:750 11px ui-monospace,Consolas,monospace}
+.board-hud-copy{background:#2c4d3e;border:1px solid #537e60;border-radius:7px;color:#d1e9cb;display:flex;align-items:center;gap:7px;font-size:10px;font-weight:800;padding:7px 10px}
+.board-hud-copy:hover{background:#45644a}
+.board-hud-notice{flex-basis:100%;color:#b9dba7;font-size:10px}
+.studio-workspace .review-card.cockpit-panel{background:linear-gradient(135deg,#172b2d,#142227 75%);border:1px solid #416355;box-shadow:0 20px 52px #0005;min-width:0;min-height:440px;display:flex;flex-direction:column;overflow:hidden}
+.cockpit-panel .review-head{padding:14px 18px 13px;flex:none;border-bottom:1px solid #4b6a5735;background:#17272b}
+.cockpit-panel .review-head .micro-heading{font-size:9px;letter-spacing:1.35px}
+.cockpit-panel .review-head h2{margin:5px 0 8px;font-size:19px;line-height:1.2;letter-spacing:-.25px}
+.cockpit-panel .review-head .metadata{gap:8px;font-size:10px}
+.cockpit-panel .result-tag{font-size:9px;padding:4px 7px}
+.cockpit-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:9px 11px 0;background:#15282a;border-bottom:1px solid #3c5d503d;flex:none}
+.cockpit-tab{min-width:0;position:relative;display:flex;justify-content:center;align-items:center;gap:6px;padding:11px 3px 12px;color:#9bb4aa;background:transparent;border:1px solid transparent;border-bottom:2px solid transparent;border-radius:8px 8px 0 0;font-size:12px;font-weight:800;transition:background .15s,color .15s,border-color .15s}
+.cockpit-tab:hover{background:#243d3b;color:#e5efdf}
+.cockpit-tab.active{color:#dff7cb;background:#274338;border-color:#4a7658;border-bottom-color:#c0e89e}
+.cockpit-tab svg{flex:none}
+.tab-ready-dot,.tab-busy-dot{width:6px;height:6px;position:absolute;right:2px;top:5px;background:#b9e798;border-radius:50%;box-shadow:0 0 10px #9bd47a77}
+.tab-busy-dot{background:#f5c779;animation:engine-pulse 1s infinite alternate}
+.cockpit-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 15px;background:#152b29;border-bottom:1px solid #3f654c4a;flex:none}
+.cockpit-review-state{min-width:0;display:flex;align-items:center;gap:8px;font-size:9px;letter-spacing:1px;font-weight:850;color:#aac6b4}
+.cockpit-state-dot{width:7px;height:7px;flex:none;background:#739889;border-radius:50%}
+.cockpit-state-dot.complete{background:#bfea98;box-shadow:0 0 10px #a7d98680}
+.cockpit-state-dot.thinking{background:#ffd185;animation:engine-pulse 1s infinite alternate}
+.cockpit-action{display:flex;align-items:center;gap:6px;flex:none;border:1px solid #9cbf85;background:#bfe29a;border-radius:7px;color:#183121;font-weight:850;font-size:11px;padding:9px 11px}
+.cockpit-action:hover:not(:disabled){background:#d4efb8}
+.cockpit-action.stop{background:#462f29;color:#f7d2bd;border-color:#a87554}
+.cockpit-content{min-height:0;flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#436e58 transparent;background:#111f24}
+.cockpit-tool-body{padding:0 0 15px;min-height:100%}
+.cockpit-panel .transport{flex:none;background:#1a3430;border-top:1px solid #446954;border-bottom:0;padding:12px 17px}
+.cockpit-panel .transport-btn{background:#2a4840;border-color:#456b57}
+.cockpit-panel .transport-btn:not(:disabled):hover{background:#3f684d}
+.cockpit-panel .progress-track{background:#3b6150}
+.cockpit-panel .move-progress span{color:#aecfba}
+.cockpit-panel .timeline{padding:18px 20px 24px;flex:none;min-height:0}
+.cockpit-panel .move-scroll{min-height:185px;max-height:none;overflow:visible}
+.cockpit-panel .move-grid{gap:5px}
+.cockpit-panel .move-chip{background:#ffffff07}
+.cockpit-panel .move-chip.active{background:#c0e5a3;color:#14271b}
+.cockpit-tool-body>.full-review,.cockpit-tool-body>.coach-panel,.cockpit-tool-body>.engine-panel{margin:0;padding:17px 19px 20px;border:0;border-radius:0;background:transparent;box-shadow:none}
+.cockpit-panel .full-review-top{gap:8px}
+.cockpit-panel .review-chart{background:#10201f}
+.cockpit-panel .coach-panel{display:flex;flex-direction:column}
+.cockpit-panel .coach-panel-head{order:0;flex:none;padding-bottom:14px}
+.cockpit-panel .coach-move-card{order:1;padding:16px 0 19px}
+.cockpit-panel .coach-summary{order:2;padding:16px 0}
+.cockpit-panel .coach-turns{order:3;padding-bottom:10px}
+.cockpit-panel .coach-caveat{order:4}
+.cockpit-panel .coach-panel-head h3{font-size:16px}
+.cockpit-panel .coach-proof-label{font-size:8px}
+.cockpit-panel .coach-assessment{font-size:13px;color:#d2e2ce;line-height:1.65}
+.cockpit-panel .coach-line-option{border-color:#476c52}
+.cockpit-empty{min-height:320px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;padding:34px 26px}
+.cockpit-empty-icon{display:grid;place-items:center;color:#ccecb4;background:#2b4c3d;border:1px solid #61846d;border-radius:14px;width:60px;height:60px;margin-bottom:3px}
+.cockpit-empty h3{font-size:19px;color:#e4f1de;margin:0;letter-spacing:-.3px}
+.cockpit-empty p{font-size:12px;color:#a6beb0;line-height:1.7;margin:0 0 8px;max-width:310px}
+.cockpit-moves .empty-state{min-height:320px}
+.cockpit-moves .move-row{grid-template-columns:40px 1fr 1fr}
+.cockpit-moves .move-number{font-size:11px}
+.cockpit-panel .engine-panel{min-height:300px}
+.studio-workspace .game-header{border-color:#4160534d}
+.studio-workspace .game-footer{border-color:#4160534d}
+@media(min-width:900px){
+  .studio-workspace{grid-template-columns:minmax(0,1.07fr) minmax(395px,.93fr)}
+  .studio-workspace .board-container{max-width:min(100%,calc(100dvh - 287px))}
+  .studio-workspace .board-card{position:sticky;top:13px;align-self:start}
+  .studio-workspace .cockpit-panel{height:calc(100dvh - 26px);position:sticky;top:13px;min-height:510px}
+}
+@media(max-width:899px){
+  .studio-workspace{grid-template-columns:1fr;max-width:660px;margin:0 auto}
+  .studio-workspace .board-card{position:relative;top:auto}
+  .studio-workspace .cockpit-panel{height:min(720px,84svh);min-height:460px}
+  .cockpit-tool-body>.full-review,.cockpit-tool-body>.coach-panel,.cockpit-tool-body>.engine-panel{padding:17px}
+}
+@media(max-width:530px){
+  .is-studying .topbar{height:61px}
+  .is-studying .page{padding-top:12px}
+  .studio-workspace .board-mat{padding:7px}
+  .studio-workspace .game-header,.studio-workspace .game-footer{min-height:51px;padding:8px 11px}
+  .studio-workspace .avatar{width:30px;height:30px;font-size:18px}
+  .studio-workspace .player-name{font-size:11px}
+  .board-hud{padding:10px}
+  .board-hud-kicker{font-size:8px}
+  .board-hud .big-san{font-size:14px}
+  .cockpit-panel .review-head{padding:12px 13px}
+  .cockpit-panel .review-head h2{font-size:17px}
+  .cockpit-tab{gap:4px;padding:11px 1px 12px;font-size:10px}
+  .cockpit-tab svg{width:14px}
+  .cockpit-tabs{padding:6px 7px 0;gap:2px}
+  .cockpit-toolbar{padding:9px 11px}
+  .cockpit-review-state{font-size:8px;letter-spacing:.5px}
+  .cockpit-action{font-size:10px;padding:9px}
+  .cockpit-panel .transport{padding:9px;gap:4px}
+  .cockpit-panel .timeline{padding:14px 12px 18px}
+  .cockpit-tool-body>.full-review,.cockpit-tool-body>.coach-panel,.cockpit-tool-body>.engine-panel{padding:12px}
+  .cockpit-panel .coach-proof-label{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .cockpit-tab,.cockpit-state-dot,.tab-busy-dot{animation:none;transition:none}
+}
