@@ -76,7 +76,6 @@ for (const [label, url] of [
       }
       console.log('STOCKFISH PAUSE PASSED: engine stopped and UI reset.');
       await page.getByRole('button', { name: 'Review tab' }).click();
-      await page.getByRole('button', { name: 'Review tab' }).click();
       await page.locator('#review-depth').press('Home');
       await page.getByRole('button', { name: 'Run full game review' }).click();
       await page.waitForFunction(() => document.querySelector('.cockpit-tabs')?.getAttribute('data-review-status') === 'complete', undefined, { timeout: 90000 });
@@ -160,6 +159,7 @@ for (const [label, url] of [
       await page.locator('.top-import').click();
       await page.locator('#pgn-input').fill('[Event "Coaching Fixture"]\n[Result "0-1"]\n\n1. f3 e5 2. g4 Qh4# 0-1');
       await page.getByRole('button', { name: 'Load PGN' }).click();
+      await page.getByRole('button', { name: 'Review tab' }).click();
       await page.locator('#review-depth').press('Home');
       await page.getByRole('button', { name: 'Run full game review' }).click();
       await page.waitForFunction(() => document.querySelector('.cockpit-tabs')?.getAttribute('data-review-status') === 'complete', undefined, { timeout: 90000 });
