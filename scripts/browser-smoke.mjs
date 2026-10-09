@@ -291,6 +291,19 @@ for (const viewport of [
     if (!await page.getByRole('dialog',{name:'Engine settings'}).count()) {
       throw Error('Settings dialog not accessible');
     }
+    // Keyboard focus should never escape the open modal on Tab.
+    const dialog = page.getByRole('dialog', {name:'Engine settings'});
+    const closeInDialog = page.getByRole('button', {name:'Close settings'});
+    await page.locator('.settings-done').focus();
+    await page.keyboard.press('Tab');
+    if (!(await closeInDialog.evaluate(el => el === document.activeElement))) {
+      throw Error('Tab did not wrap to the first dialog control');
+    }
+    await page.keyboard.press('Shift+Tab');
+    if (!(await page.locator('.settings-done').evaluate(el => el === document.activeElement))) {
+      throw Error('Shift+Tab did not wrap to the last dialog control');
+    }
+    if (!await dialog.count()) throw Error('Dialog closed unexpectedly during focus test');
     await page.keyboard.press('Escape');
     if (await page.getByRole('dialog',{name:'Engine settings'}).count()) {
       throw Error('Escape did not dismiss settings');

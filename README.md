@@ -2,7 +2,7 @@
 
 **A free, open-source home for postgame chess review.** Designed to grow into a local Stockfish-powered chess coach—not a clone of Chess.com's interface.
 
-## Current milestone: 07 · Command Deck UI
+## Current milestone: 08 · Polish and reliability
 
 The first working build provides:
 
@@ -61,6 +61,7 @@ GitHub Pages does not provide the cross-origin isolation needed for multithreade
 | 06 ✅ | Grounded, rule-based Coach Notes, position-specific explanations, legal engine alternatives and game summary. Voice deferred. |
 | 06.5 ✅ | Retain legal engine continuations, evidence-first commentary, selected verified tactical patterns and reversible line replay; optional LLM layer remains experimental |
 | 07 ✅ | Redesigned split-screen Command Deck, persistent board and controls, focused tools and Coach-first game-review flow |
+| 08 ✅ | Mobile responsive study view, bounded Stockfish caching, hidden-tab suspension, accessible dialogs and five-screen QA |
 | Future (on hold) | Chess.com username import; saved games and voice remain future options |
 
 ## Phase 08 — Polish and reliability
