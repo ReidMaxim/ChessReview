@@ -65,7 +65,7 @@ for (const [label, url] of [
         return node && node.textContent && node.textContent.trim() !== '—';
       }, undefined, { timeout: 60000 });
       const engineScore = (await page.getByTestId('engine-score').innerText()).trim();
-      if (!/^[+-]\\d+\\.\\d{2}$|^(White|Black) mate in \\d+$|^Mate$/.test(engineScore)) {
+      if (!/^[+-]\d+\.\d{2}$|^(White|Black) mate in \d+$|^Mate$/.test(engineScore)) {
         throw new Error('Unexpected Stockfish score format: ' + engineScore);
       }
       console.log('STOCKFISH PASSED: engine returned real evaluation ' + engineScore);
