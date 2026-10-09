@@ -147,3 +147,62 @@ h1 em{font-style:normal;color:#c2e4a1}
 .engine-license-note{font-size:10px;color:#789b86;margin:12px 0 0;line-height:1.6}
 @media(max-width:1000px){.engine-panel{margin:16px 17px 0}}
 @media(max-width:530px){.engine-panel{margin:13px 13px 0;padding:13px}.engine-title strong{font-size:14px}.engine-score{font-size:25px}}
+
+/* Phase 03: full-game evaluations, review graph and classification markers */
+.full-review{margin:18px 27px 0;padding:19px;background:linear-gradient(145deg,#172b2b,#112124);border:1px solid #39594f;border-radius:11px}
+.full-review-top,.review-feature-title,.full-review-controls,.review-chart-heading,.review-critical-item,.review-chart-foot{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.review-feature-title{justify-content:flex-start}
+.review-feature-icon{display:grid;place-items:center;background:#294b3e;color:#c1e8a5;border-radius:9px;width:42px;height:42px;flex:none}
+.review-feature-title strong{font-size:15px;display:block;margin-top:5px}
+.full-review-btn{display:flex;gap:7px;align-items:center;justify-content:center;white-space:nowrap;color:#173321;background:#c1e59e;border:1px solid #c1e59e;font-size:12px;font-weight:850;border-radius:8px;padding:10px 12px}
+.full-review-btn.stop{background:#413630;color:#f4d9c3;border-color:#7c5347}
+.full-review-btn:disabled{opacity:.38;cursor:not-allowed}
+.full-review-intro{font-size:12px;line-height:1.6;color:#94ac9d;margin:12px 0}
+.full-review-controls{margin:15px 0}
+.full-review-controls label{font-size:11px;white-space:nowrap;color:#bfd0be}
+.full-review-controls label strong{color:#d4edbb;margin-left:4px}
+.full-review-controls input{flex:1;accent-color:#c0e29e;min-width:70px}
+.review-progress{font-size:11px;color:#bed6b5;margin:14px 0;display:flex;flex-direction:column;gap:8px}
+.review-progress-track{height:6px;background:#2d4940;border-radius:9px;overflow:hidden}
+.review-progress-track>div{height:100%;background:#c2e3a0;transition:width .2s}
+.review-empty{display:flex;gap:8px;align-items:center;border:1px dashed #476256;border-radius:7px;padding:15px;font-size:12px;color:#9ab3a3;line-height:1.4}
+.review-error{padding:13px;border:1px solid #a56654;border-radius:7px;color:#ffcab4;font-size:12px;background:#4a242430}
+.review-chart-heading{font-size:12px;margin:17px 0 10px}
+.review-chart-heading b{font-size:12px;color:#e5eee1}
+.review-chart-heading span{font-size:10px;color:#a6c2a8;text-align:right}
+.review-chart{background:#101d20;border:1px solid #344c48;border-radius:9px;overflow:hidden}
+.review-chart svg{display:block;width:100%;height:auto}
+.review-grid-line{stroke:#31514b;stroke-width:1;stroke-dasharray:4 5}
+.review-grid-zero{stroke:#7b968b;stroke-width:1}
+.review-axis-label{font-size:11px;fill:#78978b}
+.review-eval-line{fill:none;stroke:#c6e7a1;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.review-point{fill:#abc79e}
+.review-point-selected{fill:#f4f5d1;stroke:#2d5a3c;stroke-width:2}
+.review-point-blunder{fill:#e59580;stroke:#64291e;stroke-width:2}
+.review-chart-foot{color:#7f988c;font-size:10px;margin-top:7px;gap:5px}
+.review-chart-foot span:nth-child(2){text-align:center}
+.review-quality{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin:17px 0}
+.quality-stat{padding:10px 4px;border-radius:7px;background:#223732;border:1px solid #3c544a;text-align:center;min-width:0}
+.quality-stat span{display:block;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#9fbaaa;margin-bottom:5px}
+.quality-stat strong{display:block;font-size:19px}
+.quality-inaccuracy strong,.quality-inaccuracy{color:#e5c78a}
+.quality-mistake strong,.quality-mistake{color:#eead75}
+.quality-blunder strong,.quality-blunder{color:#f19788}
+.quality-best strong,.quality-best{color:#c2e5ab}
+.quality-good strong,.quality-good{color:#a7d6c3}
+.review-critical-heading{font-size:11px;font-weight:850;letter-spacing:1.1px;color:#bdceb9;margin:18px 0 10px}
+.review-critical-list{display:flex;flex-direction:column;gap:5px;max-height:190px;overflow-y:auto}
+.review-critical-item{width:100%;background:#1a302c;border:1px solid #35564b;padding:10px 11px;border-radius:7px;color:#dce8dc;text-align:left;font-size:12px}
+.review-critical-item:hover,.review-critical-item.selected{background:#314b3e;border-color:#b8dba2}
+.quality-dot{flex:none;width:8px;height:8px;border-radius:50%;background:currentColor}
+.critical-move{font-weight:850;flex:1}
+.critical-label{font-size:10px;color:#becdbd;text-align:right}
+.review-no-critical{font-size:11px;color:#97ad9c}
+.review-estimate-note{font-size:10px;line-height:1.6;margin-top:13px;color:#859e8d}
+.move-chip.annotated{border-left:3px solid #a1c8a6;padding-left:9px}
+.move-chip.annotated-inaccuracy{border-left-color:#e7c589}
+.move-chip.annotated-mistake{border-left-color:#e6a36c}
+.move-chip.annotated-blunder{border-left-color:#f09080}
+.move-chip.annotated-best{border-left-color:#bce6a2}
+@media(max-width:1000px){.full-review{margin:16px 17px 0}}
+@media(max-width:530px){.full-review{margin:13px 13px 0;padding:13px}.review-feature-title strong{font-size:13px}.review-feature-icon{height:36px;width:36px}.full-review-btn{padding:9px 10px;font-size:11px}.review-chart-foot span:nth-child(2){display:none}.critical-label{max-width:48%}}

@@ -74,6 +74,17 @@ for (const [label, url] of [
         throw new Error('Analysis pause did not return to standby');
       }
       console.log('STOCKFISH PAUSE PASSED: engine stopped and UI reset.');
+      await page.locator('#review-depth').press('Home');
+      await page.getByRole('button', { name: 'Run full game review' }).click();
+      await page.waitForFunction(() => document.querySelector('.review-estimate-note')?.textContent?.includes('Review complete.'), undefined, { timeout: 90000 });
+      const values = await page.locator('.quality-stat strong').allTextContents();
+      if (values.reduce((sum, value) => sum + Number(value), 0) !== 4) {
+        throw new Error('Full review failed to classify four moves: ' + JSON.stringify(values));
+      }
+      if (await page.locator('.review-eval-line').count() !== 1) {
+        throw new Error('No evaluation graph rendered.');
+      }
+      console.log('FULL GAME REVIEW PASSED: 5 evaluated positions, 4 classified moves, SVG graph rendered.');
     }
   } catch (e) {
     console.error(label + ' ERROR:', String(e));

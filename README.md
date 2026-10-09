@@ -2,7 +2,7 @@
 
 **A free, open-source home for postgame chess review.** Designed to grow into a local Stockfish-powered chess coach—not a clone of Chess.com's interface.
 
-## Current milestone: 02 · Browser-based Stockfish analysis
+## Current milestone: 03 · Full-game review
 
 The first working build provides:
 
@@ -15,8 +15,9 @@ The first working build provides:
 - Imported games open on White's first move; Home returns to the starting position
 - Tests, continuous integration, and GitHub Pages deployment workflow
 - Optional Stockfish 19 Lite WebAssembly analysis, evaluations, best-move arrows, SAN variation and depth controls
+- Full-game review, evaluation timeline, classification badges, critical moves and interruptible progress
 
-**Not yet included:** Free Board/Sandbox mode, whole-game engine review, move classifications, game summaries, coach and Chess.com username lookup. The board stays read-only to avoid mixing casual live games with postgame evaluation.
+**Not yet included:** Free Board/Sandbox mode, Chess.com username lookup, full coaching explanations and proprietary Chess.com accuracy metrics. Our move labels are transparent *heuristics*, not official ratings.
 
 ## Run locally
 
@@ -50,7 +51,7 @@ GitHub Pages does not provide the cross-origin isolation needed for multithreade
 | 01 ✅ | Clean initial board, PGN import, first-move navigation, GitHub Pages |
 | 01.5 📋 | Free Board / Analysis Sandbox: manual legal moves, reset/undo, FEN and PGN export; independent from imported-game review |
 | 02 ✅ | Browser-side Stockfish evaluations, best-move arrows and principal variations |
-| 03 | Full-game evaluation graph and transparent move quality |
+| 03 ✅ | On-demand whole-game evaluation graph, move-quality estimates, progress/cancel controls, critical-move list |
 | 04 | Critical positions, guided review, retry moves |
 | 05 | Verified chess explanations and optional system voice |
 | 06 | Chess.com public-game username importer and saved history |
@@ -61,9 +62,24 @@ GitHub Pages does not provide the cross-origin isolation needed for multithreade
 2. Click **Analyze** to load Stockfish locally in your browser.
 3. Navigate to another position or change depth (8–16) to recompute the best continuation. A green arrow shows the engine's recommended next move.
 4. **Pause** disposes of the worker to conserve battery and resources.
-5. Whole-game review and move-quality classifications are reserved for stage 03.
+5. Select **Review game** for the full game; this is a separate, optional analysis and pauses single-position analysis.
+6. Full review evaluates each position sequentially at depth 6–12, displays progress and can be stopped. It may take a while for longer games on slower hardware.
 
 Engine licensing: The official Stockfish.js 19 build (GPL-3.0) is included from the npm package without modification at build time. Source, authors, and terms: https://github.com/nmrugg/stockfish.js and https://github.com/official-stockfish/Stockfish. ChessReview remains GPL-3.0-or-later.
+
+## How move classifications work
+
+ChessReview evaluates the position **before** and **after** each move using White-perspective Stockfish scores. The score difference is multiplied by the side that moved (so that losing 100 centipawns is bad for either player). Negative losses are clamped to zero.
+
+- **Best:** matches the engine's first recommended UCI move at that depth.
+- **Good:** less than 50 centipawns lost.
+- **Inaccuracy:** 50–129 centipawns lost.
+- **Mistake:** 130–259 centipawns lost.
+- **Blunder:** 260+ centipawns lost.
+
+Mate scores are represented as decisive ±1500 centipawns for this approximate bucketing, while the chart clamps the view at ±5 pawns. Game-ending mate and drawn FENs are handled directly without making an engine request. Search-depth differences and shallow mate detection can change labels. We do **not** calculate a proprietary accuracy percentage or call these judgments authoritative.
+
+Game reviews are currently session-only: importing another PGN clears the current report. Analysis runs completely in the browser without sending PGNs to an API. Stop the review to release Stockfish's Worker.
 
 ## Free Board / Analysis Sandbox design (researched, not implemented yet)
 

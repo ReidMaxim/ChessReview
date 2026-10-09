@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import Board from './components/Board';
 import EnginePanel from './components/EnginePanel';
+import GameReviewPanel, { type ReviewStatus } from './components/GameReviewPanel';
+import { GameReviewSession, type ReviewReport } from './lib/game-review';
 import { StockfishClient, type EngineState } from './lib/engine';
 import type { Analysis } from './lib/engine-utils';
 import { parsePgn, type GameRecord } from './lib/pgn';
@@ -38,6 +40,18 @@ export default function App() {
   const [engineError,setEngineError] = useState('');
   const [analysis,setAnalysis] = useState<Analysis | null>(null);
   const engineRef = useRef<StockfishClient | null>(null);
+  const reviewRef = useRef<GameReviewSession | null>(null);
+  const [reviewStatus, setReviewStatus] = useState<ReviewStatus>('idle');
+  const [reviewDepth, setReviewDepth] = useState(8);
+  const [reviewReport, setReviewReport] = useState<ReviewReport | null>(null);
+  const [reviewError, setReviewError] = useState('');
+
+  const annotated = useMemo(
+    () => new Map(reviewReport?.rows.map(row => [row.ply, row.quality]) ?? []),
+    [reviewReport],
+  );
+
+  useEffect(() => () => reviewRef.current?.cancel(), []);
 
   const totalMoves = game?.moves.length ?? 0;
   const currentMove = game && ply > 0 ? game.moves[ply - 1] : undefined;
@@ -109,9 +123,44 @@ export default function App() {
     if (engineOn && game) engineRef.current?.analyze(currentFen, depth);
   }, [engineOn, game, currentFen, depth]);
 
+  function startFullReview() {
+    if (!game) return;
+    reviewRef.current?.cancel();
+    setEngineOn(false);
+    setReviewError('');
+    setReviewReport(null);
+    setReviewStatus('running');
+    const session = new GameReviewSession(game, reviewDepth, {
+      onProgress: setReviewReport,
+      onComplete: report => {
+        setReviewReport(report);
+        setReviewStatus('complete');
+        reviewRef.current = null;
+      },
+      onError: message => {
+        setReviewError(message);
+        setReviewStatus('error');
+        reviewRef.current = null;
+      },
+    });
+    reviewRef.current = session;
+    session.start();
+  }
+
+  function cancelFullReview() {
+    reviewRef.current?.cancel();
+    reviewRef.current = null;
+    setReviewStatus('cancelled');
+  }
+
   function loadPgn(value: string) {
     try {
       const next = parsePgn(value);
+      reviewRef.current?.cancel();
+      reviewRef.current = null;
+      setReviewReport(null);
+      setReviewStatus('idle');
+      setReviewError('');
       setEngineOn(false);
       setAnalysis(null);
       setGame(next);
@@ -166,7 +215,7 @@ export default function App() {
             <h1>Every move tells <em>a story.</em></h1>
             <p className="intro-copy">Import a finished game to explore it move by move. No account, no paywall, just your chess.</p>
           </div>
-          <div className="phase-label"><span className="phase-indicator">02</span><span>ENGINE INTEGRATION<br /><b>POSTGAME ANALYSIS</b></span></div>
+          <div className="phase-label"><span className="phase-indicator">03</span><span>FULL GAME REVIEW<br /><b>STOCKFISH ANALYSIS</b></span></div>
         </div>
 
         <div className="workspace">
@@ -224,8 +273,8 @@ export default function App() {
                   {pairs.map(pair => (
                     <div className="move-row" key={pair.number}>
                       <span className="move-number">{pair.number}.</span>
-                      <button className={'move-chip' + (ply === pair.whitePly ? ' active' : '')} onClick={() => setPly(pair.whitePly)} aria-current={ply === pair.whitePly ? 'step' : undefined}>{pair.white?.san}</button>
-                      {pair.black ? <button className={'move-chip' + (ply === pair.blackPly ? ' active' : '')} onClick={() => setPly(pair.blackPly)} aria-current={ply === pair.blackPly ? 'step' : undefined}>{pair.black.san}</button> : <span />}
+                      <button className={'move-chip' + (ply === pair.whitePly ? ' active' : '') + (annotated.has(pair.whitePly) ? ' annotated annotated-' + annotated.get(pair.whitePly)!.toLowerCase() : '')} onClick={() => setPly(pair.whitePly)} aria-current={ply === pair.whitePly ? 'step' : undefined}>{pair.white?.san}</button>
+                      {pair.black ? <button className={'move-chip' + (ply === pair.blackPly ? ' active' : '') + (annotated.has(pair.blackPly) ? ' annotated annotated-' + annotated.get(pair.blackPly)!.toLowerCase() : '')} onClick={() => setPly(pair.blackPly)} aria-current={ply === pair.blackPly ? 'step' : undefined}>{pair.black.san}</button> : <span />}
                     </div>
                   ))}
                 </div>
@@ -241,7 +290,11 @@ export default function App() {
               <button className="transport-btn" aria-label="Go to end" title="End (End)" onClick={() => setPly(totalMoves)} disabled={!game || ply === totalMoves}><ChevronsRight size={20} /></button>
             </div>
 
-            <EnginePanel available={Boolean(game)} enabled={engineOn} onToggle={() => setEngineOn(on => !on)}
+            <GameReviewPanel available={Boolean(game)} status={reviewStatus} report={reviewReport}
+              error={reviewError} depth={reviewDepth} setDepth={setReviewDepth}
+              selectedPly={ply} onPly={setPly} onRun={startFullReview} onCancel={cancelFullReview}/>
+
+            <EnginePanel available={Boolean(game) && reviewStatus !== 'running'} enabled={engineOn} onToggle={() => setEngineOn(on => !on)}
               depth={depth} onDepth={setDepth} status={engineStatus} message={engineError}
               analysis={visibleAnalysis} fen={currentFen}/>
 
@@ -262,7 +315,7 @@ export default function App() {
 
             <div className="upcoming">
               <div className="upcoming-icon"><BookOpen size={19} /></div>
-              <div><strong>More review tools ahead.</strong><p>Full-game accuracy graphs, blunder detection and the independent Free Board sandbox are planned for upcoming milestones.</p></div>
+              <div><strong>Your next training tools.</strong><p>The Free Board sandbox, interactive critical-position exercises and deeper human explanations are on the roadmap.</p></div>
             </div>
           </section>
         </div>
