@@ -558,3 +558,29 @@ h1 em{font-style:normal;color:#c2e4a1}
     outline:2px solid #d6f4b3;outline-offset:2px
   }
 }
+
+
+/* Phase 10A: focused deeper investigation, in the existing Coach panel. */
+.investigation-card{background:linear-gradient(145deg,#1d3934,#162d2c);border:1px solid #668568;border-radius:10px;margin:14px 0 17px;padding:15px}
+.investigation-title{display:flex;align-items:center;gap:9px;color:#dff1d3;font-size:11px;letter-spacing:.8px;font-weight:900}
+.investigation-title>svg{color:#c5e9a4;flex:none}
+.investigation-title>span{margin-left:auto;color:#9ac49d;font-size:9px;letter-spacing:1px}
+.investigation-intro,.investigation-footnote{color:#bacdbd;font-size:12px;line-height:1.7;margin:12px 0}
+.investigation-start{display:flex;align-items:center;justify-content:center;gap:9px;padding:12px 15px;background:#c2e7a1;color:#172b1c;border:1px solid #d3eeb7;border-radius:8px;font-size:12px;font-weight:850}
+.investigation-start:hover{background:#e0f4c9}
+.investigation-running{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:11px;background:#142e28;padding:12px;border:1px solid #54775a;border-radius:8px;margin-top:12px}
+.investigation-running span{font-size:12px;color:#dceccf;line-height:1.4}
+.investigation-running span:before{content:"";display:inline-block;width:7px;height:7px;margin-right:9px;border-radius:50%;background:#e4c17a;box-shadow:0 0 9px #e4c17a;animation:engine-pulse 1s infinite alternate}
+.investigation-running button{background:#52332e;border:1px solid #b17a68;border-radius:7px;color:#f6d8c9;font-size:11px;font-weight:850;padding:10px}
+.investigation-error{color:#f5c1b0;background:#452b29;border-radius:7px;padding:10px;line-height:1.5;font-size:11px}
+.investigation-compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0 12px}
+.investigation-compare>div{min-width:0;background:#102923;border:1px solid #477256;border-radius:9px;padding:12px;display:flex;flex-direction:column;gap:7px}
+.investigation-compare>div:last-child{border-color:#826a4c;background:#312d26}
+.investigation-compare span{font-size:9px;color:#a1c5a3;font-weight:850;letter-spacing:.5px}
+.investigation-compare strong{font-size:22px;color:#e8f3dd}
+.investigation-compare b{font-size:14px;font-variant-numeric:tabular-nums;color:#d2e8c2}
+.investigation-compare small{font-size:10px;color:#9db99e}
+.investigation-footnote{font-size:10px;color:#91b099;margin-bottom:0}
+.investigation-caption{font-size:10px;letter-spacing:1px;color:#c4e7ab;font-weight:850;margin:4px 0 12px}
+@media(max-width:380px){.investigation-card{padding:11px}.investigation-compare>div{padding:9px}.investigation-compare strong{font-size:18px}.investigation-compare span{font-size:8px}}
+@media(prefers-reduced-motion:reduce){.investigation-running span:before{animation:none}}

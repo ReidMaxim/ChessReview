@@ -64,9 +64,11 @@ GitHub Pages does not provide the cross-origin isolation needed for multithreade
 | 08 ✅ | Mobile responsive study view, bounded Stockfish caching, hidden-tab suspension, accessible dialogs and five-screen QA |
 | Future (on hold) | Chess.com username import; saved games and voice remain future options |
 
-## Phase 10 — Research, not yet implemented
+## Phase 10A — Deep comparative investigation
 
-[Coach Intelligence 2.0 technical research and implementation plan](docs/PHASE_10_RESEARCH.md). Research targets matched-root Stockfish comparisons, conservative tactical evidence, replayable better alternatives, natural-language coaching and rigorous tests. The interactive sharing/export concept is parked for a later phase.
+[Coach Intelligence 2.0 technical research and implementation plan](docs/PHASE_10_RESEARCH.md). Phase 10A is implemented: open Coach Notes for an analyzed move and select **Investigate this move**. ChessReview performs two time-bounded searches from the **same pre-move FEN**: an unrestricted MultiPV search for leading options and a constrained `searchmoves` search for the move actually played. Both lines are independently validated by chess.js before display and can be explored with the existing board replay. Progress and cancellation are provided directly inside Coach. The fast full-game review is unchanged, and detailed search uses a separate worker while ordinary analysis is suspended.
+
+Exact root/FEN comparisons matter: we do not compare unrelated search roots or claim that detecting a tactical motif proves it caused an evaluation swing. We display achieved depth and bounded-score qualifiers. Investigations are kept only for the imported game in this session and cleared on new import or re-review; no user game library is introduced. Higher-confidence tactical attribution, positional comparison, and optional LLM polishing remain Phase 10B onward. The interactive sharing/export concept is parked for a later phase.
 
 ## Phase 08 — Polish and reliability
 

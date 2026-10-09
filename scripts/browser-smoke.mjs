@@ -124,6 +124,20 @@ for (const [label, url] of [
       const movedCoach = await page.locator('.coach-move-heading strong').innerText();
       if (movedCoach !== '1. e4') throw Error('Coach Notes did not follow move navigation: ' + movedCoach);
       console.log('COACH NOTES PASSED: game summary, evaluation evidence, and move-specific navigation.');
+      // Phase 10A: compare Stockfish's preferred move against a forced
+      // search of the played move from exactly the same pre-move FEN.
+      await page.getByRole('button', {name:'Investigate this move'}).click();
+      await page.waitForFunction(() => Boolean(document.querySelector('.investigation-compare')), undefined, {timeout:45000});
+      const investigationText = await page.locator('.investigation-compare').innerText();
+      if (!investigationText.includes("STOCKFISH'S FIRST CHOICE") ||
+          !investigationText.includes('YOUR PLAYED MOVE') ||
+          !investigationText.includes('e4')) {
+        throw new Error('Deep investigation did not show both matched-root lines: ' + investigationText);
+      }
+      if (!(await page.locator('.investigation-caption').count())) {
+        throw new Error('Coach engine lines did not switch to deep investigation evidence.');
+      }
+      console.log('DEEP INVESTIGATION PASSED: legal matched-root best and played lines displayed.');
       const consequence = page.getByRole('button', { name: 'Replay what stockfish expects next on board' });
       if (!await consequence.isEnabled()) throw new Error('Engine PV replay must be available after full review.');
       await consequence.click();
