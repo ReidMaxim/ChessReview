@@ -6,3 +6,6 @@ dist/
 !.env.example
 .DS_Store
 coverage/
+
+# Stockfish JS/WASM generated from the pinned npm dependency
+public/engine/

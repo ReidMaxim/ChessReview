@@ -7,9 +7,10 @@ type Props = {
   orientation: 'white' | 'black';
   lastMove?: [string, string];
   inCheck: boolean;
+  bestMove?: string | null;
 };
 
-export default function Board({ fen, orientation, lastMove, inCheck }: Props) {
+export default function Board({ fen, orientation, lastMove, inCheck, bestMove }: Props) {
   const element = useRef<HTMLDivElement>(null);
   const ground = useRef<ReturnType<typeof Chessground> | null>(null);
 
@@ -22,6 +23,7 @@ export default function Board({ fen, orientation, lastMove, inCheck }: Props) {
       viewOnly: true,
       animation: { enabled: true, duration: 180 },
       highlight: { lastMove: true, check: true },
+      drawable: { enabled: false, visible: true },
     });
     return () => {
       ground.current?.destroy();
@@ -37,8 +39,11 @@ export default function Board({ fen, orientation, lastMove, inCheck }: Props) {
       orientation,
       lastMove: lastMove ? [lastMove[0] as Key, lastMove[1] as Key] : undefined,
       check: inCheck,
+      drawable: { autoShapes: bestMove && /^[a-h][1-8][a-h][1-8]/.test(bestMove)
+        ? [{ orig: bestMove.slice(0, 2) as Key, dest: bestMove.slice(2, 4) as Key, brush: 'green' }]
+        : [] },
     });
-  }, [fen, orientation, lastMove?.[0], lastMove?.[1], inCheck]);
+  }, [fen, orientation, lastMove?.[0], lastMove?.[1], inCheck, bestMove]);
 
   return (
     <div className="board-container">
