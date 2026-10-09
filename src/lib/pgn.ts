@@ -33,7 +33,11 @@ export function parsePgn(rawPgn: string): GameRecord {
   const history = parsed.history({ verbose: true });
   if (!history.length) throw new Error('The PGN does not contain any chess moves.');
 
-  const headers = { ...parsed.header() };
+  // chess.js allows nullable header values; keep our normalized record string-only.
+  const headers: Record<string, string> = {};
+  for (const [key, value] of Object.entries(parsed.header())) {
+    if (typeof value === 'string') headers[key] = value;
+  }
   const setupFen = headers.SetUp === '1' && headers.FEN ? headers.FEN : undefined;
   let replay: Chess;
   try {
