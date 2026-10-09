@@ -240,5 +240,95 @@ for (const [label, url] of [
   }
 }
 
+// Responsive regression matrix, deliberately using the same local built app.
+for (const viewport of [
+  { width: 320, height: 568, label: 'small phone' },
+  { width: 390, height: 844, label: 'phone' },
+  { width: 768, height: 900, label: 'tablet' },
+  { width: 1024, height: 768, label: 'laptop' },
+  { width: 1440, height: 900, label: 'desktop' },
+]) {
+  const page = await browser.newPage({ viewport: {width:viewport.width,height:viewport.height} });
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  try {
+    await page.addInitScript(() => {
+      localStorage.setItem('chessreview.analysis.v1',JSON.stringify({enabled:false,depth:10,showBar:true}));
+    });
+    await page.goto('http://127.0.0.1:4173/ChessReview/', {waitUntil:'networkidle',timeout:30000});
+    await page.getByRole('button', {name:'Import game'}).first().click();
+    await page.locator('#pgn-input').fill('[Event "Responsive Fixture"]\n\n1. e4 e5 2. Nf3 Nc6 *');
+    await page.getByRole('button', {name:'Load PGN'}).click();
+    const metrics = await page.evaluate(() => ({
+      viewport:innerWidth,
+      content:document.documentElement.scrollWidth,
+      board:document.querySelector('#studio-board')?.getBoundingClientRect().toJSON(),
+      deck:document.querySelector('.cockpit-panel')?.getBoundingClientRect().toJSON(),
+      tabSizes:[...document.querySelectorAll('.cockpit-tab')].map(x=>Math.round(x.getBoundingClientRect().height)),
+    }));
+    if (metrics.content > metrics.viewport + 2) {
+      throw Error('Horizontal overflow: ' + JSON.stringify(metrics));
+    }
+    if (!metrics.board || !metrics.deck) throw Error('Board or Command Deck missing');
+    if (viewport.width >= 900 &&
+        (metrics.board.right > metrics.deck.left + 2 || metrics.board.bottom > viewport.height + 16)) {
+      throw Error('Desktop board/deck visibility regression: ' + JSON.stringify(metrics));
+    }
+    if (viewport.width < 700 && metrics.tabSizes.some(h => h < 40)) {
+      throw Error('Mobile tool tabs too small: ' + JSON.stringify(metrics.tabSizes));
+    }
+    await page.getByRole('button',{name:'Coach tab'}).click();
+    if (!await page.getByRole('heading',{name:'Give your game a closer look.'}).count()) {
+      throw Error('Coach empty state inaccessible');
+    }
+    await page.getByRole('button',{name:'Moves tab'}).click();
+    await page.getByRole('button',{name:'Next move'}).click();
+    if (!(await page.locator('.move-progress').innerText()).includes('BLACK')) {
+      throw Error('Move navigation did not work at viewport ' + viewport.width);
+    }
+    const settingsButton = page.getByRole('button',{name:'Open analysis settings'});
+    await settingsButton.click();
+    if (!await page.getByRole('dialog',{name:'Engine settings'}).count()) {
+      throw Error('Settings dialog not accessible');
+    }
+    await page.keyboard.press('Escape');
+    if (await page.getByRole('dialog',{name:'Engine settings'}).count()) {
+      throw Error('Escape did not dismiss settings');
+    }
+    if (!(await settingsButton.evaluate(el=>el===document.activeElement))) {
+      throw Error('Settings dialog did not restore keyboard focus');
+    }
+    // Import uses the same accessible dialog focus management.
+    await page.getByRole('button',{name:'Import game'}).first().click();
+    await page.keyboard.press('Escape');
+    if (await page.getByRole('dialog',{name:'Import a game'}).count()) {
+      throw Error('Escape did not dismiss import');
+    }
+    if (viewport.width < 700) {
+      // Scroll to the tool area, then independently scroll its content.
+      await page.getByRole('button',{name:'Coach tab'}).click();
+      await page.locator('.cockpit-panel').scrollIntoViewIfNeeded();
+      await page.locator('.cockpit-content').evaluate(el => {el.scrollTop = el.scrollHeight;});
+      const mobile = await page.evaluate(() => ({
+        board:document.querySelector('#studio-board')?.getBoundingClientRect().toJSON(),
+        deck:document.querySelector('.cockpit-panel')?.getBoundingClientRect().toJSON(),
+        h:innerHeight,
+      }));
+      if (!mobile.board || mobile.board.bottom <= 0 || mobile.board.top >= mobile.h ||
+          mobile.deck.bottom <= 0 || mobile.deck.top >= mobile.h) {
+        throw Error('Mobile study board and tools not simultaneously available: ' + JSON.stringify(mobile));
+      }
+    }
+    if (errors.length) throw Error('Browser JS exceptions: ' + JSON.stringify(errors));
+    console.log('RESPONSIVE PASSED: ' + viewport.label + ' ' + viewport.width + 'x' + viewport.height +
+      ', no overflow, navigation and dialog focus verified.');
+  } catch (error) {
+    failed = true;
+    console.error('RESPONSIVE FAILED: ' + viewport.label + ' ' + viewport.width + 'x' + viewport.height, String(error));
+  } finally {
+    await page.close();
+  }
+}
+
 await browser.close();
 if (failed) process.exitCode = 1;

@@ -63,6 +63,16 @@ GitHub Pages does not provide the cross-origin isolation needed for multithreade
 | 07 ✅ | Redesigned split-screen Command Deck, persistent board and controls, focused tools and Coach-first game-review flow |
 | Future (on hold) | Chess.com username import; saved games and voice remain future options |
 
+## Phase 08 — Polish and reliability
+
+- **Small-screen study mode:** phone portrait view uses a condensed board and a scrollable Command Deck, aiming to keep both usable together. Touch targets are enlarged and breakpoints adapt from 320px phones through desktop widths.
+- **Automatic analysis efficiency:** repeated positions at the same requested depth reuse a bounded, completed-result cache (96 positions). Cached partial or shallower scores are never presented as final deep analysis.
+- **Background tab behavior:** automatic single-position Stockfish suspends when the page becomes hidden and resumes on return. Explicit full-game review remains a user-controlled task.
+- **Accessible dialogs:** Escape closes settings/import, Tab/Shift-Tab remain within open dialogs, and focus returns to the original control when a dialog closes.
+- **Regression coverage:** Chromium tests now include a five-size viewport matrix, overflow checks, navigation controls, dialog focus and desktop/mobile board accessibility.
+
+These optimizations remain local-only; preferences continue to be stored in the same browser. The full-game analysis and Free Board interactions are unchanged.
+
 ## Command Deck workspace (Phase 07)
 
 We replaced the growing stack of right-side control panels with a single focused deck:
