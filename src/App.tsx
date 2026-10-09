@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Chess } from 'chess.js';
 import {
-  ArrowLeft, ArrowRight, BookOpen, Check, ChevronsLeft, ChevronsRight,
+  ArrowLeft, ArrowRight, Check, ChevronsLeft, ChevronsRight,
   Clipboard, Copy, ExternalLink, FlipHorizontal, Github, Keyboard,
   ListOrdered, BarChart3, BrainCircuit, Cpu, PlayCircle, CircleStop,
   Upload, X,
@@ -75,7 +75,6 @@ export default function App() {
   const totalMoves = game?.moves.length ?? 0;
   const currentMove = game && ply > 0 ? game.moves[ply - 1] : undefined;
   const currentFen = game?.positions[ply] ?? new Chess().fen();
-  const position = useMemo(() => new Chess(currentFen), [currentFen]);
   const pairs = useMemo(
     () => !game ? [] : Array.from({ length: Math.ceil(game.moves.length / 2) }, (_, i) => ({
       number: i + 1,
