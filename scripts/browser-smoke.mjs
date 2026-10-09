@@ -85,6 +85,35 @@ for (const [label, url] of [
         throw new Error('No evaluation graph rendered.');
       }
       console.log('FULL GAME REVIEW PASSED: 5 evaluated positions, 4 classified moves, SVG graph rendered.');
+      await page.getByRole('button', { name: 'Open Free Board' }).click();
+      if (!await page.getByRole('heading', { name: 'Your analysis sandbox' }).isVisible()) {
+        throw Error('Sandbox tab did not open.');
+      }
+      if (await page.getByRole('button', { name: 'Run full game review' }).count()) {
+        throw Error('Engine controls should not be visible in Free Board.');
+      }
+      const target = await page.locator('.sandbox-panel').count();
+      if (!target) throw Error('Sandbox panel missing.');
+
+      const moveByClick = async (file, rank) => {
+        const rect = await page.locator('cg-board').boundingBox();
+        if (!rect) throw Error('Sandbox chessboard not visible.');
+        const col = file.charCodeAt(0) - 97;
+        const row = 8 - rank;
+        await page.mouse.click(rect.x + (col + 0.5) * rect.width / 8, rect.y + (row + 0.5) * rect.height / 8);
+      };
+      await moveByClick('e', 2);
+      await moveByClick('e', 4);
+      await page.waitForFunction(() => document.querySelector('.sandbox-move-chip')?.textContent?.includes('e4'), undefined, {timeout: 10000});
+      await page.getByRole('button', { name: 'Undo sandbox move' }).click();
+      if ((await page.locator('.sandbox-turn strong').innerText()) !== 'White to move') throw Error('Sandbox undo failed.');
+      await page.getByRole('button', { name: 'Redo sandbox move' }).click();
+      if ((await page.locator('.sandbox-turn strong').innerText()) !== 'Black to move') throw Error('Sandbox redo failed.');
+      await page.getByRole('button', { name: 'Reset sandbox board' }).click();
+      if (await page.locator('.sandbox-move-chip').count()) throw Error('Sandbox reset failed.');
+      await page.getByRole('button', { name: 'Open Game Review' }).click();
+      if (!(await page.getByText('Smoke Game').count())) throw Error('Imported PGN was lost when switching modes.');
+      console.log('FREE BOARD PASSED: legal click moves, undo/redo/reset and imported game preserved.');
     }
   } catch (e) {
     console.error(label + ' ERROR:', String(e));

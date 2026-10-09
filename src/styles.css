@@ -206,3 +206,42 @@ h1 em{font-style:normal;color:#c2e4a1}
 .move-chip.annotated-best{border-left-color:#bce6a2}
 @media(max-width:1000px){.full-review{margin:16px 17px 0}}
 @media(max-width:530px){.full-review{margin:13px 13px 0;padding:13px}.review-feature-title strong{font-size:13px}.review-feature-icon{height:36px;width:36px}.full-review-btn{padding:9px 10px;font-size:11px}.review-chart-foot span:nth-child(2){display:none}.critical-label{max-width:48%}}
+
+/* Phase 04: separate Free Board study environment */
+.workspace-modes{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:6px;background:#142326;border:1px solid #2f5146;border-radius:11px;margin-bottom:17px;max-width:100%}
+.mode-choice{padding:12px 16px;background:transparent;border:1px solid transparent;color:#9fb4a7;font-size:13px;font-weight:850;border-radius:8px}
+.mode-choice:hover{background:#ffffff0a;color:#e5f4d7}
+.mode-choice.active{background:#bde49b;color:#173122;border-color:#c9eeb2}
+.mode-tip{font-size:11px;color:#859e92;margin-left:auto;padding:0 12px}
+.sandbox-panel{min-height:630px}
+.sandbox-content{padding:21px 26px;display:flex;flex-direction:column;gap:16px}
+.sandbox-help{font-size:12px;line-height:1.65;color:#9caea5;margin:0}
+.sandbox-turn{background:#102020;border:1px solid #38574b;border-radius:9px;display:flex;gap:13px;align-items:center;padding:13px}
+.sandbox-turn-symbol{display:grid;place-items:center;font-size:28px;color:#d7e8c7;background:#2b4337;width:45px;height:45px;border-radius:9px}
+.sandbox-turn strong{display:block;font-size:16px;margin-top:4px}
+.sandbox-history{display:flex;flex-wrap:wrap;align-content:start;gap:6px;min-height:102px;max-height:170px;overflow:auto;background:#102023;border:1px solid #2d4942;border-radius:8px;padding:12px}
+.sandbox-no-moves{color:#869c91;font-size:12px;margin:auto}
+.sandbox-move-chip{font-size:12px;background:#263c37;color:#d1e2d0;border:1px solid #3e5e4d;border-radius:5px;padding:7px 10px}
+.sandbox-move-chip.selected{background:#bfe2a0;color:#173121;border-color:#c9f0ae}
+.sandbox-move-chip.future{opacity:.6}
+.sandbox-controls,.sandbox-exports{display:flex;flex-wrap:wrap;gap:8px}
+.sandbox-controls button,.sandbox-exports button,.sandbox-load-button{border:1px solid #436453;border-radius:8px;background:#263f36;color:#d0e4c7;font-size:12px;font-weight:750;padding:10px 12px;display:flex;align-items:center;justify-content:center;gap:7px}
+.sandbox-controls button:hover:not(:disabled),.sandbox-exports button:hover:not(:disabled),.sandbox-load-button:hover{background:#3e5948}
+.sandbox-controls button:disabled,.sandbox-exports button:disabled{opacity:.32;cursor:not-allowed}
+.sandbox-exports{border-top:1px solid #34483e;padding-top:17px}
+.sandbox-exports button{flex:1;color:#d7e9c6}
+.sandbox-fen-entry{display:flex;flex-direction:column;gap:10px;margin-top:2px}
+.sandbox-fen-entry label{font-size:10px;letter-spacing:1.6px;font-weight:850;color:#bfd7b5}
+.sandbox-fen-entry textarea{resize:vertical;min-height:58px;width:100%;border-radius:7px;background:#0e1d20;border:1px solid #476356;padding:10px;color:#edf3df;font:12px/1.5 ui-monospace,Consolas,monospace}
+.sandbox-load-button{align-self:flex-start}
+.sandbox-error{font-size:11px;color:#efaa91;margin:0}
+.sandbox-message{font-size:11px;color:#c8e3b4;margin:0}
+.sandbox-footnote{font-size:11px;line-height:1.6;color:#91a697;border-top:1px solid #33483f;padding-top:14px}
+.sandbox-promotion-modal{max-width:430px}
+.sandbox-promotion-modal h2{margin:10px 0 20px}
+.promotion-choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.promotion-choices button{border:1px solid #597957;background:#284439;color:#e2f2d6;border-radius:8px;padding:16px 12px;font-size:16px;font-weight:800}
+.promotion-choices button:hover{background:#3e6250}
+.sandbox-cancel-promotion{border:0;background:transparent;color:#acc3a9;font-size:12px;padding:12px;margin-top:12px}
+@media(max-width:1000px){.sandbox-content{padding:19px}}
+@media(max-width:530px){.mode-choice{padding:9px 11px;font-size:12px}.mode-tip{width:100%;margin:2px 0 4px;font-size:10px;padding:0 9px}.sandbox-content{padding:16px}.sandbox-controls button{flex:1}}

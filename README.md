@@ -2,7 +2,7 @@
 
 **A free, open-source home for postgame chess review.** Designed to grow into a local Stockfish-powered chess coach—not a clone of Chess.com's interface.
 
-## Current milestone: 03 · Full-game review
+## Current milestone: 04 · Free Board study sandbox
 
 The first working build provides:
 
@@ -16,8 +16,9 @@ The first working build provides:
 - Tests, continuous integration, and GitHub Pages deployment workflow
 - Optional Stockfish 19 Lite WebAssembly analysis, evaluations, best-move arrows, SAN variation and depth controls
 - Full-game review, evaluation timeline, classification badges, critical moves and interruptible progress
+- Separate Free Board with legal drag/click moves, promotions, undo/redo, reset, FEN load, and PGN/FEN export
 
-**Not yet included:** Free Board/Sandbox mode, Chess.com username lookup, full coaching explanations and proprietary Chess.com accuracy metrics. Our move labels are transparent *heuristics*, not official ratings.
+**Not yet included:** interactive retry-the-move coaching puzzles, Chess.com username lookup, deeper training explanations, or proprietary Chess.com accuracy metrics. Review labels remain transparent heuristics.
 
 ## Run locally
 
@@ -49,12 +50,13 @@ GitHub Pages does not provide the cross-origin isolation needed for multithreade
 | Stage | Goal |
 | --- | --- |
 | 01 ✅ | Clean initial board, PGN import, first-move navigation, GitHub Pages |
-| 01.5 📋 | Free Board / Analysis Sandbox: manual legal moves, reset/undo, FEN and PGN export; independent from imported-game review |
+| 01.5 ✅ | Free Board / Analysis Sandbox: legal manual moves, reset/undo/redo, FEN import and FEN/PGN export |
 | 02 ✅ | Browser-side Stockfish evaluations, best-move arrows and principal variations |
 | 03 ✅ | On-demand whole-game evaluation graph, move-quality estimates, progress/cancel controls, critical-move list |
-| 04 | Critical positions, guided review, retry moves |
-| 05 | Verified chess explanations and optional system voice |
-| 06 | Chess.com public-game username importer and saved history |
+| 04 ✅ | Dedicated Free Board practice workspace, distinct from imported-game review |
+| 05 | Critical positions, guided review, retry moves |
+| 06 | Verified chess explanations and optional system voice |
+| 07 | Chess.com public-game username importer and saved history |
 
 ## Stockfish analysis
 
@@ -81,25 +83,18 @@ Mate scores are represented as decisive ±1500 centipawns for this approximate b
 
 Game reviews are currently session-only: importing another PGN clears the current report. Analysis runs completely in the browser without sending PGNs to an API. Stop the review to release Stockfish's Worker.
 
-## Free Board / Analysis Sandbox design (researched, not implemented yet)
+## Free Board / Analysis Sandbox
 
-We already use Chessground for rendering and chess.js for move legality and PGN/FEN.
-Chessground supports \`movable\` configuration (legal destinations and an \`after\`
-callback); chess.js provides legal moves, turn tracking, SAN, FEN, and undo.
+Select **Free Board** to open a completely separate study board:
 
-Implementation sketch:
-1. Add a separate **Review** / **Free Board** mode. The empty home view remains read-only until Free Board is explicitly selected.
-2. Keep a dedicated \`Chess\` instance and move history for sandbox positions; don't write sandbox moves into imported PGNs.
-3. Generate \`movable.dests\` from \`chess.moves({ square, verbose: true })\`; on \`after\`, validate and apply the move with chess.js, then update the board from the resulting FEN.
-4. Handle castling, en passant, promotion choices, undo/redo, reset, turn rules, orientation, and mobile touch.
-5. Export the practice line as PGN and the current position as FEN. Let the user copy a sandbox position into a *separate* postgame/standalone engine analysis view later.
-6. When browser Stockfish arrives, make it available for study positions and postgame analysis, not as assistance in games currently being played against other people.
+1. Make legal moves by dragging or clicking pieces. The turn and legal destinations are enforced by chess.js, including castling and en passant.
+2. Choose a queen, rook, bishop, or knight when a pawn promotes.
+3. Undo and redo moves, click previous moves to navigate, or reset to a standard starting position. Playing a new move after undo creates a new branch and discards the old continuation.
+4. Load any valid FEN to practice a custom position.
+5. Copy the current position as FEN or the played line through the current cursor as PGN. No game data leaves the browser.
+6. Switch back to Game Review without losing the imported PGN or its analysis results; the sandbox retains its own position during the session.
 
-Calling the feature "Free Board" or "Analysis Sandbox" helps avoid confusion with cheating during online live games. Chess.com prohibits using a chess engine or other outside help during ongoing live games.
-
-See:
-- https://github.com/lichess-org/chessground/blob/master/src/config.ts
-- https://support.chess.com/en/articles/8568369-what-do-i-need-to-know-about-fair-play-on-chess-com
+Engine analysis is **deliberately disabled** in Free Board. This prevents the separate practice workflow from becoming a real-time competitive match assistant. To study Stockfish suggestions, import a finished PGN into Game Review instead.
 
 ## Design boundaries
 

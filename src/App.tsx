@@ -6,6 +6,8 @@ import {
   Upload, X,
 } from 'lucide-react';
 import Board from './components/Board';
+import SandboxWorkspace from './components/SandboxWorkspace';
+import { createSandbox, type SandboxState } from './lib/sandbox';
 import EnginePanel from './components/EnginePanel';
 import GameReviewPanel, { type ReviewStatus } from './components/GameReviewPanel';
 import { GameReviewSession, type ReviewReport } from './lib/game-review';
@@ -27,6 +29,9 @@ function name(game: GameRecord | null, side: 'White' | 'Black') {
 export default function App() {
   // Open to the ordinary starting position, with no fictitious game loaded.
   const [game, setGame] = useState<GameRecord | null>(null);
+  const [mode, setMode] = useState<'review' | 'sandbox'>('review');
+  const [sandbox, setSandbox] = useState<SandboxState>(() => createSandbox());
+  const [sandboxOrientation, setSandboxOrientation] = useState<'white' | 'black'>('white');
   const [ply, setPly] = useState(0);
   const [orientation, setOrientation] = useState<'white' | 'black'>('white');
   const [importOpen, setImportOpen] = useState(false);
@@ -70,7 +75,7 @@ export default function App() {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.altKey || event.ctrlKey || event.metaKey || importOpen) return;
+      if (mode !== 'review' || event.altKey || event.ctrlKey || event.metaKey || importOpen) return;
       const target = event.target as HTMLElement | null;
       if (target?.matches('input, textarea, select, [contenteditable="true"]')) return;
       if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
@@ -82,7 +87,7 @@ export default function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [totalMoves, importOpen]);
+  }, [totalMoves, importOpen, mode]);
 
   useEffect(() => {
     const active = movePanelRef.current?.querySelector('.move-chip.active');
@@ -122,6 +127,18 @@ export default function App() {
   useEffect(() => {
     if (engineOn && game) engineRef.current?.analyze(currentFen, depth);
   }, [engineOn, game, currentFen, depth]);
+
+  function switchMode(next: 'review' | 'sandbox') {
+    if (next === mode) return;
+    if (next === 'sandbox') {
+      // Keep the PGN and results available for later, but suspend both engines.
+      setEngineOn(false);
+      reviewRef.current?.cancel();
+      reviewRef.current = null;
+      if (reviewStatus === 'running') setReviewStatus('cancelled');
+    }
+    setMode(next);
+  }
 
   function startFullReview() {
     if (!game) return;
@@ -164,6 +181,7 @@ export default function App() {
       setEngineOn(false);
       setAnalysis(null);
       setGame(next);
+      setMode('review');
       // Start at White's first move, not the game's final position.
       // Users can press Home to see the initial setup.
       setPly(1);
@@ -213,11 +231,21 @@ export default function App() {
         <div className="intro-row">
           <div>
             <h1>Every move tells <em>a story.</em></h1>
-            <p className="intro-copy">Import a finished game to explore it move by move. No account, no paywall, just your chess.</p>
+            <p className="intro-copy">{mode === 'review' ? 'Import a finished game to explore every decision, with optional local Stockfish analysis.' : 'Experiment with legal moves, explore positions, and export your practice lines.'}</p>
           </div>
-          <div className="phase-label"><span className="phase-indicator">03</span><span>FULL GAME REVIEW<br /><b>STOCKFISH ANALYSIS</b></span></div>
+          <div className="phase-label"><span className="phase-indicator">04</span><span>STUDY WORKSPACE<br /><b>GAME REVIEW + FREE BOARD</b></span></div>
         </div>
 
+        <div className="workspace-modes" role="group" aria-label="ChessReview workspace mode">
+          <button className={'mode-choice' + (mode === 'review' ? ' active' : '')} aria-label="Open Game Review" aria-pressed={mode === 'review'} onClick={() => switchMode('review')}>♟ Game Review</button>
+          <button className={'mode-choice' + (mode === 'sandbox' ? ' active' : '')} aria-label="Open Free Board" aria-pressed={mode === 'sandbox'} onClick={() => switchMode('sandbox')}>♙ Free Board</button>
+          <span className="mode-tip">{mode === 'review' ? 'Completed games · engine assistance' : 'Offline practice · no engine'}</span>
+        </div>
+
+        {mode === 'sandbox' ? (
+          <SandboxWorkspace session={sandbox} setSession={setSandbox}
+            orientation={sandboxOrientation} setOrientation={setSandboxOrientation}/>
+        ) : (
         <div className="workspace">
           <section className="board-card" aria-label="Game board">
             <div className="game-header">
@@ -315,10 +343,11 @@ export default function App() {
 
             <div className="upcoming">
               <div className="upcoming-icon"><BookOpen size={19} /></div>
-              <div><strong>Your next training tools.</strong><p>The Free Board sandbox, interactive critical-position exercises and deeper human explanations are on the roadmap.</p></div>
+              <div><strong>Explore free-form positions.</strong><p>Switch to Free Board above to make your own moves, import a FEN, and export PGN. Critical-position exercises and guided explanations come next.</p></div>
             </div>
           </section>
         </div>
+        )}
 
         <div className="bottom-bar">
           <div className="shortcuts"><Keyboard size={16} /> <b>KEYBOARD</b> <span>← →</span> moves <span>HOME / END</span> jump</div>
@@ -342,7 +371,7 @@ export default function App() {
             <div className="modal-actions">
               <button className="primary-button" onClick={() => loadPgn(draft)}><Upload size={16} /> Load PGN</button>
             </div>
-            <div className="modal-footnote">Free Board sandbox, Chess.com username import, and drag-and-drop files are planned for later milestones.</div>
+            <div className="modal-footnote">For a blank interactive practice board, select Free Board. Chess.com username import and drag-and-drop files are planned for later milestones.</div>
           </section>
         </div>
       )}
