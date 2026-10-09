@@ -157,7 +157,7 @@ export default function App() {
                 <div className="metadata">
                   <span className="result-tag">{game ? scoreLabel(result) : 'NO GAME LOADED'}</span>
                   {game ? <span>{totalMoves} plies</span> : <span>Import a PGN to begin</span>}
-                  {game?.headers.Date && game.headers.Date !== '????.??.??' && <span>{game.headers.Date}</span>}}
+                  {game?.headers.Date && game.headers.Date !== '????.??.??' && <span>{game.headers.Date}</span>}
                 </div>
               </div>
               <button className="plain-icon" title="Import another game" aria-label="Import another game" onClick={() => { setError(''); setImportOpen(true); }}><Clipboard size={19} /></button>
@@ -193,7 +193,7 @@ export default function App() {
               <button className="transport-btn" aria-label="Go to beginning" title="Beginning (Home)" onClick={() => setPly(0)} disabled={!game || ply === 0}><ChevronsLeft size={20} /></button>
               <button className="transport-btn" aria-label="Previous move" title="Previous (←)" onClick={() => setPly(p => Math.max(0, p - 1))} disabled={!game || ply === 0}><ArrowLeft size={20} /></button>
               <div className="move-progress"><div className="progress-track"><div style={{ width: (totalMoves ? 100 * ply / totalMoves : 0) + '%' }} /></div><span>{!game ? 'NO GAME LOADED' : ply === 0 ? 'START POSITION' : currentMove?.number + (currentMove?.color === 'w' ? '. WHITE' : '... BLACK')}</span></div>
-              <button className="transport-btn" aria-label="Next move" title="Next (→)" onClick={() => setPly(p => Math.min(game.moves.length, p + 1))} disabled={!game || ply === totalMoves}><ArrowRight size={20} /></button>
+              <button className="transport-btn" aria-label="Next move" title="Next (→)" onClick={() => setPly(p => Math.min(totalMoves, p + 1))} disabled={!game || ply === totalMoves}><ArrowRight size={20} /></button>
               <button className="transport-btn" aria-label="Go to end" title="End (End)" onClick={() => setPly(totalMoves)} disabled={!game || ply === totalMoves}><ChevronsRight size={20} /></button>
             </div>
 
