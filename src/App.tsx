@@ -4,9 +4,13 @@ import {
   ArrowLeft, ArrowRight, Check, ChevronsLeft, ChevronsRight,
   Clipboard, Copy, ExternalLink, FlipHorizontal, Github, Keyboard,
   ListOrdered, BarChart3, BrainCircuit, Cpu, PlayCircle, CircleStop,
-  Upload, X,
+  Settings2, Upload, X,
 } from 'lucide-react';
 import Board from './components/Board';
+import EvaluationBar from './components/EvaluationBar';
+import AnalysisSettings from './components/AnalysisSettings';
+import { readPreferences, savePreferences, type AnalysisPreferences } from './lib/preferences';
+import { terminalScore } from './lib/game-review';
 import SandboxWorkspace from './components/SandboxWorkspace';
 import { createSandbox, type SandboxState } from './lib/sandbox';
 import EnginePanel from './components/EnginePanel';
@@ -43,12 +47,15 @@ export default function App() {
   const [ply, setPly] = useState(0);
   const [orientation, setOrientation] = useState<'white' | 'black'>('white');
   const [importOpen, setImportOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [draft, setDraft] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const movePanelRef = useRef<HTMLDivElement>(null);
-  const [engineOn,setEngineOn] = useState(false);
-  const [depth,setDepth] = useState(12);
+  const [preferences, setPreferences] = useState<AnalysisPreferences>(readPreferences);
+  const depth = preferences.depth;
+  const setDepth = (value: number) => setPreferences(prev => ({ ...prev, depth: value }));
+  const setEngineEnabled = (enabled: boolean) => setPreferences(prev => ({ ...prev, enabled }));
   const [engineStatus,setEngineStatus] = useState<EngineState | 'off'>('off');
   const [engineError,setEngineError] = useState('');
   const [analysis,setAnalysis] = useState<Analysis | null>(null);
@@ -60,6 +67,10 @@ export default function App() {
   const [reviewError, setReviewError] = useState('');
   const [hintPly, setHintPly] = useState<number | null>(null);
   const [linePreview, setLinePreview] = useState<LinePreview | null>(null);
+  // One on-demand Worker: suspend it for full-game review and line previews.
+  // The preference remains on, so it resumes automatically afterward.
+  const engineOn = preferences.enabled && Boolean(game) && mode === 'review'
+    && reviewStatus !== 'running' && hintPly === null && linePreview === null;
 
   const annotated = useMemo(
     () => new Map(reviewReport?.rows.map(row => [row.ply, row.quality]) ?? []),
@@ -67,6 +78,7 @@ export default function App() {
   );
 
   useEffect(() => () => reviewRef.current?.cancel(), []);
+  useEffect(() => savePreferences(preferences), [preferences]);
 
   useEffect(() => {
     if (tool === 'coach') toolScrollRef.current?.scrollTo({ top: 0 });
@@ -88,7 +100,7 @@ export default function App() {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (mode !== 'review' || event.altKey || event.ctrlKey || event.metaKey || importOpen) return;
+      if (mode !== 'review' || event.altKey || event.ctrlKey || event.metaKey || importOpen || settingsOpen) return;
       const target = event.target as HTMLElement | null;
       if (target?.matches('input, textarea, select, [contenteditable="true"]')) return;
       if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
@@ -109,7 +121,7 @@ export default function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [totalMoves, importOpen, mode, linePreview, game, reviewReport]);
+  }, [totalMoves, importOpen, settingsOpen, mode, linePreview, game, reviewReport]);
 
   useEffect(() => {
     const active = movePanelRef.current?.querySelector('.move-chip.active');
@@ -161,7 +173,6 @@ export default function App() {
     setLinePreview(null);
     const candidate = validatedBestMove(game.positions[target - 1], reviewReport.bestMoves[target - 1] ?? null);
     if (!candidate) return;
-    setEngineOn(false);
     setHintPly(target);
     setPly(target - 1);
   }
@@ -171,7 +182,6 @@ export default function App() {
     const lines = coachLines(game, reviewReport, target);
     if (!lines?.[kind].steps.length) return;
     setHintPly(null);
-    setEngineOn(false);
     setLinePreview({ anchorPly: target, kind, step: 0 });
   }
 
@@ -189,8 +199,7 @@ export default function App() {
     setHintPly(null);
     setLinePreview(null);
     if (next === 'sandbox') {
-      // Keep the PGN and results available for later, but suspend both engines.
-      setEngineOn(false);
+      // Switching modes suspends the Worker but preserves preferences and the imported PGN.
       reviewRef.current?.cancel();
       reviewRef.current = null;
       if (reviewStatus === 'running') setReviewStatus('cancelled');
@@ -203,7 +212,8 @@ export default function App() {
     setHintPly(null);
     setLinePreview(null);
     reviewRef.current?.cancel();
-    setEngineOn(false);
+    engineRef.current?.dispose();
+    engineRef.current = null;
     setReviewError('');
     setReviewReport(null);
     setReviewStatus('running');
@@ -243,7 +253,6 @@ export default function App() {
       setLinePreview(null);
       setReviewStatus('idle');
       setReviewError('');
-      setEngineOn(false);
       setAnalysis(null);
       setGame(next);
       setMode('review');
@@ -273,6 +282,14 @@ export default function App() {
   const lastMove = currentMove ? [currentMove.from, currentMove.to] as [string, string] : undefined;
   const result = game?.headers.Result;
   const visibleAnalysis = engineOn && analysis?.fen === currentFen ? analysis : null;
+  const savedPositionScore = reviewReport?.scores[ply] ?? null;
+  const terminalPositionScore = game ? terminalScore(currentFen) : null;
+  const boardScore = linePreview ? null :
+    visibleAnalysis?.score ?? savedPositionScore ?? terminalPositionScore;
+  const boardScoreSource = linePreview ? 'variation' : visibleAnalysis ? 'live'
+    : savedPositionScore ? 'review' : terminalPositionScore ? 'terminal' : 'none';
+  const barThinking = engineOn && !visibleAnalysis && !savedPositionScore
+    && (engineStatus === 'loading' || engineStatus === 'analyzing' || engineStatus === 'ready');
   const hintedMove = hintPly !== null && ply === hintPly - 1 && game && reviewReport
     ? validatedBestMove(game.positions[hintPly - 1], reviewReport.bestMoves[hintPly - 1] ?? null)?.uci
     : null;
@@ -302,6 +319,7 @@ export default function App() {
         </div>
         <div className="top-actions">
           <span className="local-label"><span className="status-dot" /> LOCAL-FIRST</span>
+          <button className="icon-link settings-link" title="Analysis settings" aria-label="Open analysis settings" onClick={() => setSettingsOpen(true)}><Settings2 size={19}/></button>
           <a className="icon-link github-link" href="https://github.com/ReidMaxim/ChessReview" target="_blank" rel="noreferrer" aria-label="View source on GitHub" title="Source on GitHub"><Github size={19} /></a>
           <button className="primary-button top-import" onClick={() => { setError(''); setImportOpen(true); }}><Upload size={16} /> Import game</button>
         </div>
@@ -339,7 +357,10 @@ export default function App() {
             </div>
 
             <div className="board-mat">
-              <Board fen={displayFen} orientation={orientation} lastMove={displayLastMove} inCheck={displayPosition.inCheck()} bestMove={displaySuggestedMove} />
+              <div className={'board-playfield' + (!game || !preferences.showBar ? ' no-eval-bar' : '')}>
+                {game && preferences.showBar && <EvaluationBar score={boardScore} source={boardScoreSource} thinking={barThinking}/>}
+                <Board fen={displayFen} orientation={orientation} lastMove={displayLastMove} inCheck={displayPosition.inCheck()} bestMove={displaySuggestedMove} />
+              </div>
             </div>
 
             {linePreview && previewLine && (
@@ -358,7 +379,7 @@ export default function App() {
                 <strong className="big-san">{linePreview
                   ? (replayStep?.san || 'Start of line')
                   : currentMove ? (currentMove.number + (currentMove.color === 'w' ? '. ' : '... ') + currentMove.san) : 'Starting position'}</strong>
-                {!linePreview && reviewReport?.scores[ply] && <span className="hud-evaluation">{formatScore(reviewReport.scores[ply]!)}</span>}
+                {!linePreview && boardScore && <span className="hud-evaluation">{formatScore(boardScore)}</span>}
               </div>
               <button className="board-hud-copy" title="Copy current board position" aria-label="Copy board FEN" onClick={copyFen}><Copy size={14} /> FEN</button>
               {notice && <span className="board-hud-notice" role="status">{notice}</span>}
@@ -465,7 +486,7 @@ export default function App() {
               )}
               {tool === 'engine' && (
                 <div className="cockpit-tool-body cockpit-engine">
-            <EnginePanel available={Boolean(game) && reviewStatus !== 'running'} enabled={engineOn} onToggle={() => { setHintPly(null); setEngineOn(on => !on); }}
+            <EnginePanel available={Boolean(game) && reviewStatus !== 'running'} enabled={engineOn} onToggle={() => { setHintPly(null); setEngineEnabled(!preferences.enabled); }}
               depth={depth} onDepth={setDepth} status={engineStatus} message={engineError}
               analysis={visibleAnalysis} fen={currentFen}/>
 
@@ -494,6 +515,11 @@ export default function App() {
           <a href="https://github.com/ReidMaxim/ChessReview" target="_blank" rel="noreferrer">Source & documentation <ExternalLink size={14} /></a>
         </footer>
       </main>
+
+      {settingsOpen && (
+        <AnalysisSettings preferences={preferences} onChange={setPreferences}
+          onClose={() => setSettingsOpen(false)}/>
+      )}
 
       {importOpen && (
         <div className="modal-backdrop" onMouseDown={event => { if (event.currentTarget === event.target) setImportOpen(false); }}>
