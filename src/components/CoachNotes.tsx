@@ -5,6 +5,7 @@ import type { ReviewReport } from '../lib/game-review';
 import { buildGameSummary, buildMoveInsight } from '../lib/insights';
 import { coachLines, type CoachLine } from '../lib/coach-intelligence';
 import { composeCoachNarrative } from '../lib/coach-narrative';
+import { buildCoachPractice, practiceFeedback } from '../lib/coach-practice';
 import { formatScore } from '../lib/engine-utils';
 import type { InvestigationResult, InvestigationStage } from '../lib/investigation';
 import { extractTacticalEvidence } from '../lib/tactical-evidence';
@@ -66,6 +67,7 @@ export default function CoachNotes({
   onReplayEvidence,
 }: Props) {
   const [technical, setTechnical] = useState(false);
+  const [practiceSelection, setPracticeSelection] = useState<{ id: string; uci: string } | null>(null);
   const summary = buildGameSummary(game, report);
   const focus = hintPly !== null && selectedPly === hintPly - 1 ? hintPly : selectedPly;
   const insight = buildMoveInsight(game, report, focus);
@@ -73,6 +75,9 @@ export default function CoachNotes({
   const lines = coachLines(game, report, focus, investigation?.stage === 'complete' ? investigation.result : null);
   const deepResult = investigation?.stage === 'complete' ? investigation.result : null;
   const narrative = composeCoachNarrative(game, report, focus, deepResult);
+  const practice = buildCoachPractice(game, report, focus, deepResult);
+  const practiceAnswer = practiceSelection && practice && practiceSelection.id === practice.id
+    ? practiceSelection.uci : null;
   const evidence = deepResult && game.moves[focus - 1] && narrative?.source === 'investigation'
     ? narrative.status === 'engine-agrees' ? []
       : extractTacticalEvidence(deepResult, game.moves[focus - 1].color)
@@ -84,7 +89,7 @@ export default function CoachNotes({
     <section className="coach-panel" aria-label="Coach Notes">
       <div className="coach-panel-head">
         <div className="coach-icon"><BookOpenCheck size={20}/></div>
-        <div><div className="micro-heading">PHASE 10C · CHESS INTELLIGENCE</div><h3>Coach Notes</h3></div>
+        <div><div className="micro-heading">PHASE 10D · CHESS INTELLIGENCE</div><h3>Coach Notes</h3></div>
         <span className="coach-proof-label">ENGINE + BOARD FACTS</span>
       </div>
       <div className="coach-summary">
@@ -141,6 +146,34 @@ export default function CoachNotes({
                     <Play size={15}/> Show the key moment
                   </button>
                 )}
+              </div>
+            )}
+            {practice && (
+              <div className="coach-practice" data-testid="coach-practice">
+                <div className="coach-subheading small"><Target size={15}/> FIND THE STRONGER MOVE</div>
+                <h4>Which first move would you explore?</h4>
+                <p>Both moves are legal from the position before your move. Make a choice, then explore what Stockfish found.</p>
+                <div className="coach-practice-choices" role="group" aria-label="Choose a move to examine">
+                  {practice.choices.map(choice => (
+                    <button key={choice.uci} type="button"
+                      className={practiceAnswer === choice.uci ? 'selected' : ''}
+                      aria-pressed={practiceAnswer === choice.uci}
+                      onClick={() => setPracticeSelection({ id: practice.id, uci: choice.uci })}>
+                      {choice.san}
+                    </button>
+                  ))}
+                </div>
+                {practiceAnswer && (
+                  <div className="coach-practice-feedback" role="status">
+                    <p>{practiceFeedback(practice, practiceAnswer)}</p>
+                    <button type="button" onClick={() => onPreview(focus, 'alternative')}>
+                      <Play size={14}/> Replay the suggested continuation
+                    </button>
+                  </div>
+                )}
+                <small>Verified legal variations · deeper search depth {practice.depth}.
+                  {practice.bounded ? ' At least one score is a bound, so the ranking is less certain.' :
+                    ' A deeper search could still change the ranking.'}</small>
               </div>
             )}
             {technical && (
@@ -238,7 +271,7 @@ export default function CoachNotes({
       {insight && (
           <div className="investigation-card" data-testid="investigation">
             <div className="investigation-title"><Crosshair size={16}/>
-              <strong>DEEPER INVESTIGATION</strong><span>PHASE 10C</span>
+              <strong>DEEPER INVESTIGATION</strong><span>PHASE 10D</span>
             </div>
             {investigation?.stage === 'complete' && investigation.result ? (
               <>
