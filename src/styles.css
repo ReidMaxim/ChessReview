@@ -630,3 +630,16 @@ h1 em{font-style:normal;color:#c2e4a1}
 
 /* Phase 10C: deeper engine agreement supersedes a stale shallow badge. */
 .coach-quality.coach-deep-pick{color:#e8f8d3;background:#3b6749;border:1px solid #92c58d}
+
+/* Phase 10D: a lightweight, verified same-root move-choice exercise. */
+.coach-practice{border:1px solid #5f866f;border-radius:10px;background:#18352c;margin:16px 0;padding:15px}
+.coach-practice h4{color:#edf7df;font-size:15px;line-height:1.4;margin:8px 0}
+.coach-practice>p,.coach-practice-feedback p{color:#c6dfcf;font-size:12px;line-height:1.65;margin:7px 0 11px}
+.coach-practice-choices{display:flex;gap:9px;flex-wrap:wrap}
+.coach-practice-choices button{min-width:75px;min-height:42px;border:1px solid #8cae82;border-radius:8px;background:#2c4a3b;color:#f0f8e6;font-size:14px;font-weight:850;padding:9px 15px;cursor:pointer}
+.coach-practice-choices button:hover,.coach-practice-choices button.selected{background:#d4ecbd;color:#173323;border-color:#d4ecbd}
+.coach-practice-choices button:focus-visible,.coach-practice-feedback button:focus-visible{outline:3px solid #d4ecbd;outline-offset:3px}
+.coach-practice-feedback{border-top:1px solid #60846a;margin-top:13px;padding-top:9px}
+.coach-practice-feedback button{display:inline-flex;align-items:center;gap:7px;border:1px solid #b1d09b;border-radius:7px;background:#395b42;color:#eaf7db;padding:10px 12px;font-size:11px;font-weight:800;cursor:pointer}
+.coach-practice>small{display:block;margin-top:12px;color:#a8c7b3;font-size:10px;line-height:1.65}
+@media(max-width:530px){.coach-practice{padding:12px}.coach-practice-choices button{flex:1}}
