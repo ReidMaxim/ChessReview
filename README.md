@@ -2,7 +2,7 @@
 
 **A free, open-source home for postgame chess review.** Designed to grow into a local Stockfish-powered chess coach—not a clone of Chess.com's interface.
 
-## Current milestone: 10C · Natural-language coaching
+## Current milestone: 10D · Engine-grounded practice
 
 The first working build provides:
 
@@ -19,9 +19,10 @@ The first working build provides:
 - Separate Free Board with legal drag/click moves, promotions, undo/redo, reset, FEN load, and PGN/FEN export
 - Coach Notes: readable game recaps, per-move analysis, verified board facts, legal best-move alternatives and a before-position arrow
 - Enhanced coaching: saved Stockfish principal variations, legally replayable response and alternative lines, checkmate/capture/check and knight-fork evidence, a natural-language Coach view and optional Technical view
+- Phase 10D practice: a two-choice "Find the stronger move" exercise following a verified deeper investigation, with board replay and honest score-bound notes
 - Command Deck: four focused tool views (Moves, Review, Coach, Engine), a pinned chessboard on desktop, independent analysis-panel scrolling, and persistent navigation controls
 
-**Not yet included:** interactive retry-the-move training puzzles, Chess.com username lookup, AI-generated tactical explanations, saved reviews or proprietary Chess.com accuracy metrics. We intentionally avoid claiming tactical reasons that are not proven by engine lines.
+**Not yet included:** drag-and-drop retry-the-move training puzzles, Chess.com username lookup, AI-generated tactical explanations, saved reviews or proprietary Chess.com accuracy metrics. We intentionally avoid claiming tactical reasons that are not proven by engine lines.
 
 ## Run locally
 
@@ -65,7 +66,14 @@ GitHub Pages does not provide the cross-origin isolation needed for multithreade
 | 10A ✅ | Same-root deep engine comparisons with cancellation and replay |
 | 10B ✅ | Conservative evidence for mate, material after recaptures, knight double attacks and absolute pins; false-positive tests |
 | 10C ✅ | Fact-first natural-language coach, instructional takeaway, safer uncertainty, deeper-analysis corrections and technical detail toggle |
+| 10D (first slice) | Verified two-choice move practice with legal same-root Stockfish alternatives; full on-board retry remains future work |
 | Future (on hold) | Chess.com username import; saved games and voice remain future options |
+
+## Phase 10D — Guided move-choice practice (first slice)
+
+After **Deeper Investigation** completes, Coach Notes offers **Find the stronger move** when the deeper searches select different legal first moves from the same pre-move FEN. Students choose between the move played and Stockfish’s first choice, receive restrained feedback, and can replay the suggested continuation on the existing board. Candidate moves are validated against saved legal engine lines; no fictional distractors, guaranteed wins, forced tactical explanations or remote AI service are introduced. Exercises disappear for incomplete, stale, malformed or agreeing investigations. Engine score bounds are disclosed as uncertainty.
+
+This is a small, non-drag-and-drop teaching interaction; the dedicated board-based puzzle trainer is still on hold. Coach stays above the technical details and Deeper Investigation remains below everything else.
 
 ## Phase 10C — Fact-first human coaching
 
