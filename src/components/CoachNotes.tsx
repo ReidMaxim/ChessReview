@@ -76,7 +76,8 @@ export default function CoachNotes({
   const deepResult = investigation?.stage === 'complete' ? investigation.result : null;
   const narrative = composeCoachNarrative(game, report, focus, deepResult);
   const practice = buildCoachPractice(game, report, focus, deepResult);
-  const practiceAnswer = practiceSelection?.id === practice?.id ? practiceSelection.uci : null;
+  const practiceAnswer = practiceSelection && practice && practiceSelection.id === practice.id
+    ? practiceSelection.uci : null;
   const evidence = deepResult && game.moves[focus - 1] && narrative?.source === 'investigation'
     ? narrative.status === 'engine-agrees' ? []
       : extractTacticalEvidence(deepResult, game.moves[focus - 1].color)
